@@ -1,0 +1,339 @@
+\chapter{Timer/Counter 0}
+\label{cha:timercounters}
+In veel applicaties moet gewacht worden, bijvoorbeeld elke seconde een meting doen,
+waterklep 1 seconde open. Het meten van deze tijd (wachten) is op te lossen door
+middel van de bekende wachtlus. De processor kan dan echter geen andere taken
+uitvoeren en dat is in veel situaties w\'el gewenst. Denk hierbij aan Real Time
+systemen en besturingssystemen. Beter is deze tijd hardwarematig te meten.
+Een \textsl{timer} kan dan uitkomst bieden. Een timer is niets anders dan een teller
+die op iedere klokpuls, bijvoorbeeld van de oscillator, wordt verhoogd. Na een bepaald
+aantal klokpulsen heeft de timer de hoogste stand bereikt en begint weer opnieuw.
+Er wordt dan een overflow-signaal afgegeven. Dit signaal genereert, indien geactiveerd,
+een interrupt.
+
+Dezelfde schakeling kan ook gebruikt worden om extern aangeboden pulsen te tellen.
+Dit wordt dan een \textsl{counter} genoemd. Met de combinatie van een counter en een
+timer kan een \textsl{frequentiemeter} gemaakt worden. E\'en timer meet de tijd van 1
+seconde en een (andere) counter telt in die tijd het aantal aangeboden pulsen.
+
+Timer/Counter 0 is de eerste van de drie timer/counters van de ATmega32 die
+besproken worden. Het is een 8-bits timer/counter wat inhoudt dat het kan tellen
+tussen 0 en~255. Als de timer/counter intern opgewekte klokpulsen telt spreken
+we van een timer. Bij het tellen van extern opgewekte klokpulsen spreken
+we van een counter. Technisch gezien is er geen verschil tussen de hardware
+van een timer en een counter. Het verschil is dus alleen wat de klokbron is.
+
+Timer/Counter 0 heeft vier werkmodi:
+\begin{itemize}
+\item Normal mode: de Timer/Counter 0 telt van 0 tot en met 255 en begint dan
+weer bij 0. Zowel interne ale externe klokpulsen kunnen geteld worden.
+\item CTC-mode: de Timer/Counter telt van 0 tot een van te voren opgegeven
+maximale waarde en begint dan weer op 0. Zowel interne als externe klokpulsen
+kunnen geteld worden.
+\item Fast PWM-mode: de Timer/Counter telt van 0 tot 255 en begint dan weer op~0.
+Deze modus wordt voornamelijk gebruikt om een signaalvorm op \'e\'en van de externe
+pinnen van de ATmega32 te genereren.
+\item Phase correct PWM-mode: de Timer/Counter telt omhoog van 0 tot en met 255
+en telt dan weer omlaag tot en met 0. Deze modus wordt voornamelijk gebruikt om een
+signaalvorm op \'e\'en van de externe pinnen van de ATmega32 te genereren.
+\end{itemize}
+
+In alle werkmodi is het mogelijk om een interrupts te genereren. Elke interrupt
+is gekoppeld aan een eigen interruptvector.
+
+
+\begin{lstlisting}[language=AVRassembler,caption=Test.]
+    ldi r16,16    ; load R16 with value 16
+    LDI R16,16    ; the same
+\end{lstlisting}
+
+\begin{lstlisting}[language=C,caption=Test.]
+int main(void) {
+    return 0;
+}
+\end{lstlisting}
+
+
+
+\section{De registers van Timer/Counter 0}
+De besturing van Timer/Counter 0 is vastgelegd in het TCCR0-register, zie
+figuur~\ref{fig:tccr0}. Dit register kan zowel gelezen als geschreven worden.
+
+%%%% TCCR0
+\begin{figure}[!ht]
+\renewcommand\arraystretch{1.4}
+%\footnotesize
+\scriptsize
+\centering
+\begin{tabu} to 0.9\textwidth {X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]}
+7 & 6 & 5 & 4 & 3 & 2 & 1 & 0 \\
+\hline
+\multicolumn{1}{|c}{FOC0} & \multicolumn{1}{|c}{WGM00} & \multicolumn{1}{|c}{COM01} & \multicolumn{1}{|c}{COM00} & \multicolumn{1}{|c}{WGM01} & \multicolumn{1}{|c}{CS02} & \multicolumn{1}{|c}{CS01} & \multicolumn{1}{|c|}{CS00} \\ \hline
+W & R/W & R/W & R/W & R/W & R/W & R/W & R/W \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+\end{tabu}
+\caption{TCCR0 register}
+\label{fig:tccr0}
+\end{figure}
+%%%% TCCR0
+
+\textbf{Bit 7 -- FOC0: Force Output Compare}\\
+De FOC0-bit is alleen actief als we de WGM0\textsl{x}-bits non-PWM-modus specificeren. Bij
+het specificeren van \'e\'en van de twee PWM-modi moet deze bit altijd als 0 geschreven
+worden. Als deze bit met een 1 geladen wordt, zal de signaalvormgenerator een directe
+compare match krijgen en zal de OC0-uitgang veranderen zoals is vastgelegd in de
+COM0\textsl{x}-bits.
+
+%%%The FOC0 bit is only active when the WGM00 bit specifies a non-PWM mode. However, for
+%%%ensuring compatibility with future devices, this bit must be set to zero when TCCR0 is written
+%%%when operating in PWM mode. When writing a logical one to the FOC0 bit, an immediate compare
+%%%match is forced on the Waveform Generation unit. The OC0 output is changed according to
+%%%its COM01:0 bits setting. Note that the FOC0 bit is implemented as a strobe. Therefore it is the
+%%%value present in the COM01:0 bits that determines the effect of the forced compare.
+
+\textbf{Bits 3,6 -- WGM0\textsl{x} signaalvormgeneratorbits}\\
+Deze bits bepalen de telvolgorde van de Timer/Counter, de maximale telwaarde en het type
+van de signaalvormgenerator. Zie tabel~\ref{tab:signaalvormgeneratie0}.
+
+\begin{table}[!ht]
+\centering
+\caption{Signaalvormgeneratie}
+\label{tab:signaalvormgeneratie0}
+\renewcommand\arraystretch{1.2}
+\begin{tabu} {cc|l|l|l|l}
+WGM01 & WGM00 & Modus & Top & Update OCR0 & TOV0-vlag \\ \hline
+  0   &   0   & Normaal & 255 & direct & 255 \\
+  0   &   1   & Phase Correct PWM & 255 & 255 & 0 \\
+  1   &   0   & CTC & OCR0 & direct & 255 \\
+  1   &   1   & Fast PWM & 255 & 0 & 255
+\end{tabu}
+\end{table}
+
+\textbf{Bits 5,4 -- COM0\textsl{x} Compare Match Output Mode}\\
+Deze bits bepalen het gedrag van de Output Compare pin (OC0).
+Merk op dat de Data Direction (DDR) bit van de OC0-pin op 1 gezet
+moet worden om de uitgang te activeren.
+Tabel~\ref{tab:comparematchnonpwm0} geeft de functionaliteit van
+de COM0\textsl{x}-bits weer in non-PWM-modus (Normal en CTC).
+
+\begin{table}[!ht]
+\centering
+\caption{Compare Match uitgang, non-PWM-modus.}
+\label{tab:comparematchnonpwm0}
+\renewcommand\arraystretch{1.2}
+\begin{tabu} {cc|l}
+COM01 & COM00 & Beschrijving \\ \hline
+  0   &   0   & Normale poortwerking, OC0 is gedeactiveerd \\
+  0   &   1   & Verander OC0 op een compare match (toggle) \\
+  1   &   0   & Zet OC0 op 0 op een compare match \\
+  1   &   1   & Zet OC0 op 1 op een compare match \\
+\end{tabu}
+\end{table}
+
+Tabel~\ref{tab:comparematchfastpwm0} geeft de functionaliteit van de
+COM0\textsl{x}-bits weer in Fast PWM-modus.
+
+\begin{table}[!ht]
+\centering
+\caption{Compare Match uitgang, Fast PWM-modus.}
+\label{tab:comparematchfastpwm0}
+\renewcommand\arraystretch{1.2}
+\begin{tabu} {cc|l}
+COM01 & COM00 & Beschrijving \\ \hline
+  0   &   0   & Normale poortwerking, OC0 is gedeactiveerd \\
+  0   &   1   & Niet gebruikt \\
+  1   &   0   & Zet OC0 op 0 op een compare match, zet op 1 op TCNT = 255 \\
+  1   &   1   & Zet OC0 op 1 op een compare match, zet op 0 op TCNT = 255 \\
+\end{tabu}
+\end{table}
+
+Tabel~\ref{tab:comparematchphasecorrectpwm0} geeft de functionaliteit van de
+COM0\textsl{x}-bits weer in Phase Correct PWM-modus.
+
+\begin{table}[!ht]
+\centering
+\caption{Compare Match uitgang, Fast PWM-modus.}
+\label{tab:comparematchphasecorrectpwm0}
+\renewcommand\arraystretch{1.2}
+\begin{tabu} {cc|p{11cm}}
+COM01 & COM00 & Beschrijving \\ \hline
+  0   &   0   & Normale poortwerking, OC0 is gedeactiveerd \\
+  0   &   1   & Niet gebruikt \\
+  1   &   0   & Zet OC0 op 0 bij Compare Match bij omhoog tellen, zet OC0 op 1 bij omlaag tellen \\
+  1   &   1   & Zet OC0 op 1 bij Compare Match bij omhoog tellen, zet OC0 op 0 bij omlaag tellen \\
+\end{tabu}
+\end{table}
+
+
+
+
+
+\textbf{Bits 2,1,0 -- CS0\textsl{x} klokselectiebits}\\
+In tabel~\ref{tab:klokselectie0} is te zien hoe een klok geselecteerd kan worden.
+
+\begin{table}[!ht]
+\centering
+\caption{Klokselectie voor Timer/Counter 0.}
+\label{tab:klokselectie0}
+\renewcommand\arraystretch{1.2}
+%\tabulinesep=1.2mm
+\begin{tabu} to 0.5\textwidth{ccc|l}
+CS02 & CS01 & CS00 & operatie \\ \hline
+  0  &   0  &   0  & geen werking, klok is gestopt\\
+  0  &   0  &   1  & $\text{CLK}_\text{IO}/1$, geen prescaler \\
+  0  &   1  &   0  & $\text{CLK}_\text{IO}/8$, van prescaler \\ 
+  0  &   1  &   1  & $\text{CLK}_\text{IO}/64$, van prescaler \\
+  1  &   0  &   0  & $\text{CLK}_\text{IO}/256$, van prescaler \\
+  1  &   0  &   1  & $\text{CLK}_\text{IO}/1024$, van prescaler \\
+  1  &   1  &   0  & externe klokbron op de T0-pin, neergaande flank \\
+  1  &   1  &   1  & externe klokbron op de T0-pin, opgaande flank \\
+\end{tabu}
+\end{table}
+
+
+Het TCNT0-register is een 8-bits register en bevat de tellerwaarde van Timer/Counter~0,
+zie figuur~\ref{fig:tcnt0}. Dit register kan zowel gelezen als geschreven worden. Bij
+een schrijfactie telt Timer/Counter~0 verder vanaf de geschreven waarde.
+
+%%%% TCNT0
+\begin{figure}[!ht]
+\renewcommand\arraystretch{1.4}
+%\footnotesize
+\scriptsize
+\centering
+\begin{tabu} to 0.9\textwidth {X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]}
+7 & 6 & 5 & 4 & 3 & 2 & 1 & 0 \\
+\hline
+\multicolumn{8}{|c|}{TCNT0[7:0]}  \\ \hline
+R/W & R/W & R/W & R/W & R/W & R/W & R/W & R/W \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+\end{tabu}
+\caption{TCNT0 register}
+\label{fig:tcnt0}
+\end{figure}
+%%%% TCNT0
+
+Het OCR0-register bevat een 8-bits waarde en wordt continue vergeleken met de waarde
+in het TCNT0-register, zie figuur~\ref{fig:ocr0}. Als de twee register gelijk zijn aan
+elkaar kan een interrupt gegenereerd worden of kan een golfvorm gegenereerd worden op
+de OC0-uitgang.
+
+%%%% OCR0
+\begin{figure}[!ht]
+\renewcommand\arraystretch{1.4}
+%\footnotesize
+\scriptsize
+\centering
+\begin{tabu} to 0.9\textwidth {X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]}
+7 & 6 & 5 & 4 & 3 & 2 & 1 & 0 \\
+\hline
+\multicolumn{8}{|c|}{OCR0[7:0]}  \\ \hline
+R/W & R/W & R/W & R/W & R/W & R/W & R/W & R/W \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+\end{tabu}
+\caption{OCR0 register}
+\label{fig:ocr0}
+\end{figure}
+%%%% OCR0
+
+
+
+
+
+
+
+
+De indeling van het TIMSK-register is te zien in figuur~\ref{fig:timsk}. Voor Timer/Counter~0
+zijn alleen de bits OCIE0 (bit 1) en TOIE0 (bit 0) van belang.
+
+%%%% TIMSK
+\begin{figure}[!ht]
+\renewcommand\arraystretch{1.4}
+%\footnotesize
+\scriptsize
+\centering
+\begin{tabu} to 0.9\textwidth {X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]}
+7 & 6 & 5 & 4 & 3 & 2 & 1 & 0 \\
+\hline
+\multicolumn{1}{|c}{\cellcolor{lightgrey} OCIE2} & \multicolumn{1}{|c}{\cellcolor{lightgrey} TOIE2} & \multicolumn{1}{|c}{\cellcolor{lightgrey} TICIE1} & \multicolumn{1}{|c}{\cellcolor{lightgrey} OCIE1A} & \multicolumn{1}{|c}{\cellcolor{lightgrey} OCIE1B} & \multicolumn{1}{|c}{\cellcolor{lightgrey} TOIE1} & \multicolumn{1}{|c}{OCIE0} & \multicolumn{1}{|c|}{TOIE0} \\ \hline
+R/W & R/W & R/W & R/W & R/W & R/W & R/W & R/W \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+\end{tabu}
+\caption{TIMSK register}
+\label{fig:timsk}
+\end{figure}
+%%%% TIMSK
+
+\textbf{Bit 1 -- OCIE0: Timer/Counter 0 Output Compare Match Interrupt Enable} \\
+Een logische 1 in deze bit zorgt ervoor dat de compare match interrupt geactiveerd wordt.
+Een interrupt wordt pas daadwerkelijk uitgevoerd als de I-bit in het statusregister ook
+een logische 1 is.
+
+\textbf{Bit 0 -- TOIE0: Timer/Counter 0 Overflow Interrupt Enable} \\
+Een logische 1 in deze bit zorgt ervoot dat de overflow interrupt geactiveerd wordt.
+Een interrupt wordt pas daadwerkelijk uitgevoerd als de I-bit in het statusregister ook
+een logische 1 is.
+
+De indeling van het TIFR-register is te zien in figuur~\ref{fig:tifr}. Voor Timer/Counter~0
+zijn alleen de bits OCF0 (bit 1) en TOV0 (bit 0) van belang.
+
+%%%% TIFR
+\begin{figure}[!ht]
+\renewcommand\arraystretch{1.4}
+%\footnotesize
+\scriptsize
+\centering
+\begin{tabu} to 0.9\textwidth {X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]}
+7 & 6 & 5 & 4 & 3 & 2 & 1 & 0 \\
+\hline
+\multicolumn{1}{|c}{\cellcolor{lightgrey} OCF2} & \multicolumn{1}{|c}{\cellcolor{lightgrey} TOV2} & \multicolumn{1}{|c}{\cellcolor{lightgrey} ICF1} & \multicolumn{1}{|c}{\cellcolor{lightgrey} OCF1A} & \multicolumn{1}{|c}{\cellcolor{lightgrey} OCF1B} & \multicolumn{1}{|c}{\cellcolor{lightgrey} TOV1} & \multicolumn{1}{|c}{OCF0} & \multicolumn{1}{|c|}{TOV0} \\ \hline
+R/W & R/W & R/W & R/W & R/W & R/W & R/W & R/W \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+\end{tabu}
+\caption{TIFR register}
+\label{fig:tifr}
+\end{figure}
+%%%% TIFR
+
+\textbf{Bit 1 -- OCF0: Output Compare Flag 0} \\
+Deze bit wordt op een logische 1 gezet als de waarde van het OCR0-register gelijk is aan
+de waarde in het TCNT0-register (compare match). Dit gebeurt op de volgende Timer/Counter
+0 klokpuls. Deze bit wordt op een logische~0 gezet
+als de bijbehorende interrupt wordt uitgevoerd. Als alternatief voor het op 0 zetten
+kan een 1 worden geschreven naar deze bit.
+
+\textbf{Bit 0 -- TOV0: Timer/Counter 0 Overflow Flag} \\
+Deze bit wordt op een logische 1 gezet als Timer/Counter 0 een overflow veroorzaakt. Dit
+gebeurt op de volgende Timer/Counter 0 klokpuls. Deze
+bit wordt op 0 gezet als de bijbehorende interrupt wordt uitgevoerd. Als alternatief voor
+het op 0 zetten kan een 1 worden geschreven naar deze bit. In fasecorrect PWM-modus wordt
+deze bit op 1 gezet als Timer/Counter 0 van telrichting verandert op 0.
+
+In figuur~\ref{fig:sfior} is het SFIOR-register te zien.
+
+%%%% SFIOR
+\begin{figure}[!ht]
+\renewcommand\arraystretch{1.4}
+%\footnotesize
+\scriptsize
+\centering
+\begin{tabu} to 0.9\textwidth {X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]}
+7 & 6 & 5 & 4 & 3 & 2 & 1 & 0 \\
+\hline
+\multicolumn{1}{|c}{\cellcolor{lightgrey} ADTS2} & \multicolumn{1}{|c}{\cellcolor{lightgrey} ADTS1} & \multicolumn{1}{|c}{\cellcolor{lightgrey} ADTS0} & \multicolumn{1}{|c}{\cellcolor{lightgrey} --} & \multicolumn{1}{|c}{\cellcolor{lightgrey} ACME} & \multicolumn{1}{|c}{\cellcolor{lightgrey} PUD} & \multicolumn{1}{|c}{\cellcolor{lightgrey}PSR2} & \multicolumn{1}{|c|}{PRS10} \\ \hline
+R/W & R/W & R/W & R & R/W & R/W & R/W & R/W \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+\end{tabu}
+\caption{SFIOR register}
+\label{fig:sfior}
+\end{figure}
+%%%% SFIOR
+
+\textbf{Bit 0 -- PRS10: Prescaler reset Timer/Counter 1 en Timer/Counter 0}\\
+Wanneer deze bit met een 1 geschreven wordt, zal de prescaler van Timer/Counter 1 en
+Timer/Counter 0 worden gereset. Nadat de operatie is voltooid, wordt deze bit door de
+hardware op 0 gezet. Merk op dat de prescaler door zowel Timer/Counter 1 als
+Timer/Counter 0 gebruikt wordt. Het be\"invloedt de werking van beide Timer/Counters.
+Deze bit leest altijd als een 0.
+
+\endinput
