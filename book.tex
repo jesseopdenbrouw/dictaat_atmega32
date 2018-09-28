@@ -1,0 +1,35 @@
+%% Warn me about obsolete Latex stuff
+\RequirePackage[l2tabu, orthodox]{nag}
+
+%% Some credentials about the author
+\newcommand{\bookauthor}{Jesse op den Brouw}
+\newcommand{\booktitleI}{ATmega32}
+\newcommand{\booktitleII}{}
+\newcommand{\booktitle}{\booktitleI{} \booktitleII}
+\newcommand{\booksubtitle}{software-ontwikkeling in\\ assembler en C}
+\newcommand{\bookinstitution}{De Haagse Hogeschool}
+\newcommand{\bookedition}{Eerste druk}
+\newcommand{\bookversion}{0.1}
+\newcommand{\bookkeywords}{AVR ATmega32 hardware software microcontroller assembler}
+\newcommand{\email}{J.E.J.opdenBrouw@hhs.nl}
+%% Nice text on empty pages, or not...
+\newcommand{\thispageintentionallyleftblank}{Deze pagina is opzettelijk leeg gelaten.}
+%\newcommand{\thispageintentionallyleftblank}{}
+%%\newcommand{\bookuseadvanded}{\useadvancedfalse}
+%% Pick one or none, placed in outer upper corner
+\newcommand{\finalconceptdraft}{CONCEPT}
+
+
+\input{book_preamble.tex}
+\input{lstlangAVR.tex}
+
+\usepackage{booktabs}
+
+\begin{document}
+%\maketitle
+
+\input{book_chap01}
+
+\input{book_chap02}
+
+\end{document}
