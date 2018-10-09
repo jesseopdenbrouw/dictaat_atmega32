@@ -47,7 +47,8 @@
                                                                
 %% Use of dashed lines in tables
 \usepackage{tabu}
-%\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{booktabs}
 \usepackage{multirow}
 
 %% Use array's
@@ -451,9 +452,10 @@
 \makeatother
 
 %% Tikz to draw state diagrams
-\usepackage{pgf}
+%\usepackage{pgf}
 \usepackage{tikz}
 \usetikzlibrary{positioning,shapes,arrows,automata}
+\usepackage{circuitikz}
 \tikzstyle{every picture}+=[font={\sffamily\small}]
 \tikzstyle{every state}=[fill=none,draw=black,text=black,very thick,minimum size=1.2cm,initial distance=1cm]
 % How to draw Moore states
