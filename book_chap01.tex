@@ -50,6 +50,7 @@ Nadat een interrupt request door de processor is herkend, wordt het lopende
 programma onderbroken (de huidige instructie wordt afgemaakt) en wordt een
 \textsl{interrupt service routine} (ISR) uitgevoerd. De ISR handelt dan de
 interrupt verder af. Daarna gaat de processor verder waar het gebleven was.
+Een andere naam is \textsl{Interrupt Handler}.
 
 We beelden dit uit in figuur~\ref{fig:intsimpleinterruptdispatch}. Hierin
 stelt \textsf{H} de uitvoer van het lopende programma voor. Op een gegeven
@@ -288,6 +289,7 @@ en wordt de stack pointer met twee verhoogd. Tevens wordt de I-bit in het
 statusregister op 1 gezet.
 
 \section{Context switch}
+\label{sec:contextswitch}
 Een interrupt kan op elk willekeurig moment plaatsvinden. We noemen zulke
 interrupts \textsl{asynchroon}. Asynchroon houdt in dat het moment van
 de interrupt niet (helemaal) te voorspellen is\footnote{Interrupts van
@@ -666,3 +668,241 @@ aangehouden, wordt de ISR onderbroken door een interruptaanvraag. Daardoor
 wordt elke keer als een ISR wordt gestart het terugkeeradres op de stack
 gezet. De stack loopt zodoende snel vol wat resulteert in een \textsl{stack
 overflow}.
+
+\section{Software interrupts}
+De ATmega32 kent geen instructies om een interrupt te genereren. Dit kan
+echter wel nagebootst worden middels de externe interrupts zoals te zien
+is in listing~\ref{cod:intint0swint}. In dit voorbeeld wordt INT0 gebruikt
+voor het genereren van een interrupt. Dit kan gerealiseerd worden door
+de externe interrupt pin PD2 (Port D, pin 2) als uitgang te defini\"eren.
+Door het schrijven van een logische 1 naar PD2 wordt een opgaande flank
+gerealiseerd die door de ATmega32 gezien wordt als een interruptaanvraag
+voor INT0.
+
+In de listing worden de vectoren en de stack ge\"initialiseerd (regels~1
+t/m~10). In regel~12 en~13 wordt PD2 als uitgang gezet. In regels~15
+t/m~19 wordt INT0 als flankgevoelige interrupt (opgaande flank) ingesteld.
+Daarna worden de interrupts vrijgegeven. Om niet continu een interrupt te
+genereren is een korte wachtlus ingebouwd. Die zorgt ervoor dat eens in
+de~767 klokcycli een interrupt gegenereerd wordt. Eerst wordt PD2 op een
+logische~0 gezet (regel~24). Daarna wordt de wachtlus gestart (regels~26
+en~27). In regels~29 en~30 wordt PD2 logisch~1 gemaakt zodat een opgaande
+flank wordt aangeboden aan de interrupthardware. Daarna wordt gesprongen
+naar regel~23 zodat weer een logische~0 op PD2 gezet wordt en wordt de
+wachtlus weer uitgevoerd.
+
+\begin{figure}[!ht]
+\begin{lstlisting}[language=AVRassembler,caption=Externe interrupt INT0 wordt gebruikt als software interrupt.,label=cod:intint0swint]
+		.org 0x000
+		rjmp start
+		.org 0x002
+		rjmp int0_isr
+
+		.org 0x02a
+start:	ldi  r16,low(RAMEND)   ; stack
+		out  SPL,r16
+		ldi  r16,high(RAMEND)
+		out  SPH,r16
+
+		ldi  r16,0b00000100    ; PD2 as output
+		out  DDRD,r16
+
+		ldi  r16,0b00000011    ; INT0 pos. edge
+		out  MCUCR,r16
+
+		ldi  r16,0b01000000    ; INT0 active
+		out  GICR,r16
+
+		sei                    ; free interrupts
+
+again:	ldi  r16,0x00
+        out  PORTD,r16         ; Port D2 off
+
+delay:	subi r16,0x01          ; delay 767 clocks
+		brne delay
+
+		ldi  r16,0b00000100    ; generate interrupt
+		out  PORTD,r16
+
+		rjmp again
+
+int0_isr:
+		reti
+\end{lstlisting}
+\end{figure}
+
+Software interrupt zijn in de ATmega32 niet echt nodig. Maar in de wereld
+van de Operating Systems vormen ze een schakel tussen een gebruikersprogramma
+en de \textsl{kernel}. Een gebruikersprogramma mag bijvoorbeeld niet zomaar
+naar de harddisk schrijven maar moet deze acties via de kernel uitvoeren. Om
+in \textsl{kernel mode} te komen, moet een software interrupt worden
+uitgevoerd. De kernel bepaalt dan welke interrupt is aangevraagd en wat de te
+verwachten actie is. Deze kernel routines worden \textsl{system calls} genoemd.
+In programmeertalen zoals `C' zijn software interrupts niet direct te gebruiken.
+In plaats daarvan zijn er functies zoals \lstinline|read| en \lstinline|write|
+voorhanden. Een gebruikersprogramma voert bijvoorbeeld een \lstinline|read| uit
+en in die functie wordt dan de software interrupt uitgevoerd.
+
+\section{Interrupts in `C'}
+De programmeertaal `C' is niet uitgerust om ISR's te programmeren. De GNU
+AVR-C compiler heeft echter functies waarmee dit wel mogelijk is. Dit zijn dus
+uitbreidingen op de taal `C' en kunnen niet gebruikt worden op bijvoorbeeld een
+PC of een iMac.
+
+Om gebruik te maken van de interruptfaciliteiten moet een header-bestand
+geladen worden waarin functies zijn gedeclareerd. Dit is het bestand
+\lstinline|avr/interrupt.h|. Aangezien de interrupts geactiveerd moeten worden
+via de I/O-registers moet ook \lstinline|avr/io.h| geladen worden. Dit is te
+zien in listing~\ref{cod:intheaderfiles}. Het gebruik van header-bestand
+\lstinline|avr/cpufunc.h| wordt verderop uitgelegd.
+
+\begin{figure}[!ht]
+\begin{lstlisting}[language=C,caption=Header-bestanden voor het gebruik van interrupts.,label=cod:intheaderfiles]
+#include <avr/io.h>
+#include <avr/interrupt.h>
+#include <avr/cpufunc.h>
+\end{lstlisting}
+\end{figure}
+
+Na het laden van header-bestand \lstinline|avr/interrupt.h| is voor het
+coderen van een ISR de macro \lstinline|ISR(...)| beschikbaar. De definitie
+van deze macro is complex en wordt verder niet besproken. Als argument aan
+de macro moet in ieder geval de interruptvectornaam gegeven worden. Optioneel
+kunnen enkele \textsl{atrributes} opgegeven worden.
+
+%%\begin{figure}[!ht]
+%%\begin{lstlisting}[language=C,caption=Header-bestanden voor het gebruik van interrupts.,label=cod:intheaderfiles]
+%%ISR(vectornaam, attributes) { ... }
+%%\end{lstlisting}
+%%\end{figure}
+
+In tabel~\ref{tab:intinterruptvectornames} zijn de interruptvectornamen te
+zien. Deze namen moeten gebruikt worden bij de \lstinline|ISR|-macro.
+Merk op dat de reset geen vectornaam heeft. Het is namelijk niet
+mogelijk om een ISR voor de reset te coderen.
+
+\begin{table}[!ht]
+\centering
+\caption{Interruptvectornamen voor ISR in `C' voor de ATmega32.}
+\label{tab:intinterruptvectornames}
+\setlength{\tabcolsep}{8pt}
+\begin{tabu}{cll}
+\toprule
+vector \# & Bron          & Vectornaam \\ \midrule
+ 1        & RESET         & $-$ \\
+ 2        & INT0          & \lstinline|INT0_vect| \\
+ 3        & INT1          & \lstinline|INT1_vect| \\
+ 4        & INT2          & \lstinline|INT2_vect| \\
+ 5        & TIMER2\_COMP  & \lstinline|TIMER2_COMP_vect| \\
+ 6        & TIMER2\_OVF   & \lstinline|TIMER2_OVF_vect| \\
+ 7        & TIMER1\_CAPT  & \lstinline|TIMER1_CAPT_vect| \\
+ 8        & TIMER1\_COMPA & \lstinline|TIMER1_COMPA_vect| \\
+ 9        & TIMER1\_COMPB & \lstinline|TIMER1_COMPB_vect| \\
+10        & TIMER1\_OVF   & \lstinline|TIMER1_OVF_vect| \\
+11        & TIMER0\_COMP  & \lstinline|TIMER0_COMP_vect| \\
+12        & TIMER0\_OVF   & \lstinline|TIMER0_OVF_vect| \\
+13        & SPI, STC      & \lstinline|SPI_STC_vect| \\
+14        & USART, RXC    & \lstinline|USART_RXC_vect| \\
+15        & USART, UDRE   & \lstinline|USART_UDRE_vect| \\
+16        & USART, TXC    & \lstinline|USART_TXC_vect| \\
+17        & ADC           & \lstinline|ADC_vect| \\
+18        & EE\_RDY       & \lstinline|EE_RDY_vect| \\
+19        & ANA\_COMP     & \lstinline|ANA_COMP_vect| \\
+20        & TWI           & \lstinline|TWI_vect| \\
+21        & SPM\_RDY      & \lstinline|SPM_RDY_vect| \\
+\bottomrule
+\end{tabu}
+\end{table}
+
+In listing~\ref{cod:intisrforint0} is een compleet voorbeeld gegeven voor het
+coderen van de INT0 ISR. Na het laden van de header-bestanden wordt INT0
+ge\"initialiseerd als een flankgevoelige interrupt op de opgaande flank
+(regels 7 en 8). In regel 10 worden de interrupts vrijgegeven door het
+aanzetten van de I-vlag middels het \lstinline|sei()|-statement. Daarna
+wordt in een eeuwig durende lus gewacht middels het \lstinline|while|-statement.
+
+\begin{figure}[!ht]
+\begin{lstlisting}[language=C,caption=Voorbeeld van het gebruik van de INT0 interrupt service routine.,label=cod:intisrforint0]
+#include <avr/io.h>
+#include <avr/interrupt.h>
+#include <avr/cpufunc.h>
+
+int main(void) {
+	
+	MCUCR = 0x03;  /* INT0 rising edge */
+	GICR  = 0x40;  /* INT0 active */
+	
+	sei();         /* Free interrupts */
+	
+    while (1) {    /* Wait forever */
+    }
+}
+
+ISR(INT0_vect) {   /* INT0 ISR */
+	_NOP();        /* To set a breakpoint */
+}
+\end{lstlisting}
+\end{figure}
+
+Het \lstinline|sei()|-statement wordt vertaald naar een assembler
+\lstinline|sei|-instructie. Er bestaat ook een \lstinline|cli()|-statement
+dat vertaald wordt naar een assembler \lstinline|cli|-instructie.
+In feite zijn dit macro's met de volgende definitie:
+
+\begin{figure}[!ht]
+\begin{lstlisting}[language=C,caption=Definitie van de sei()- en cli()-statements.,label=cod:intseiclidef]
+#define sei()  __asm__ __volatile__ ("sei" ::: "memory")
+#define cli()  __asm__ __volatile__ ("cli" ::: "memory")
+\end{lstlisting}
+\end{figure}
+
+De constructie \lstinline|__asm__| signaleert aan de C-compiler dat wat
+volgt een assemblerinstructie is. De constructie \lstinline|__volatile__|
+geeft aan dat de C-compiler de assemblerinstructie letterlijk moet
+overnemen en geen optimalisatie mag toepassen\footnote{De
+\lstinline|sei|- en \lstinline|cli|-instructies passen geen
+geheugenplaatsen en registers aan. De compiler zou hieruit de conclusie
+kunnen trekken dat de beide instructies dus netto geen effect hebben en
+dat ze dus verwijderd kunnen worden uit de gecompileerde code.}.
+
+De ISR is gecodeerd in de regels 16 t/m 18 en heeft feitelijk \'e\'en
+statement. De macro \lstinline|_NOP()| wordt vertaald naar een assembler
+\lstinline|nop|-instructie. Deze macro wordt gedefinieerd door het
+header-bestand \lstinline|avr/cpufunc.h|. Het gebruik van deze macro
+is handig bij het zetten van een breakpoint tijdens debuggen.
+
+\subsubsection*{Bad Interrupt Handler}
+Wat gebeurt er als een bepaalde interruptbron geactiveerd wordt maar er
+is geen ISR beschikbaar, d.w.z.\@ er is geen ISR geprogrammeerd. Als
+de betreffende interrupt geregistreerd wordt, zal de normale verwerking
+van de interrupt plaatsvinden. Er wordt gesprongen naar het vectoradres
+van de interrupt en daar wordt dan met de instructieverwerking begonnen.
+Maar er is geen ISR beschikbaar dus kan er niet naar de ISR gesprongen
+worden. De C-compiler lost dit op door alle niet gebruikte interrupts
+om te leiden naar de zogenoemde Bad Interrupt Handler. Deze
+\textsl{catch-all} ISR is als volgt in te stellen:
+
+\begin{figure}[!ht]
+\begin{lstlisting}[language=C,caption=De Bad Interrupt Handler.,label=cod:intbadisr]
+#include <avr/interrupt.h>
+
+ISR(BADISR_vect) {
+	/* user code here */
+}
+\end{lstlisting}
+\end{figure}
+
+De standaard actie van de Bad Interrupt Handler is dat er naar de reset-vector
+wordt gesprongen. Dit kan leiden tot een problematische uitvoering van het
+programma. Het is daarom aan te bevelen om de Bad Interrupt Handler altijd
+op te nemen in het programma.
+
+\subsubsection*{Interrupt prologue en epilogue}
+In paragraaf~\ref{sec:contextswitch} is al beschreven dat tijdens het
+uitvoeren van de ISR de gebruikte registers en de vlaggen op de stack
+gezet moeten worden. De C-compiler zorgt hier automatisch voor. Dit wordt
+de \textsl{prologue} van de ISR genoemd. Vlak voordat de ISR verlaten
+wordt, worden de registers en de vlaggen weer van de stack gehaald.
+Ook hier zorgt de C-compiler voor. Dit wordt de \textsl{epilogue}
+genoemd. Merk op dat de C-compiler ook de \lstinline|reti|-instructie
+automatisch toevoegt. 
