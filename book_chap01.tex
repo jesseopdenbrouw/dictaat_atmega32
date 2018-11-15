@@ -751,7 +751,7 @@ PC of een iMac.
 
 Om gebruik te maken van de interruptfaciliteiten moet een header-bestand
 geladen worden waarin functies zijn gedeclareerd. Dit is het bestand
-\lstinline|avr/interrupt.h|. Aangezien de interrupts geactiveerd moeten worden
+\lstinline|avr/interrupt.h|. Aangezien de interrupts geactiveerd worden
 via de I/O-registers moet ook \lstinline|avr/io.h| geladen worden. Dit is te
 zien in listing~\ref{cod:intheaderfiles}. Het gebruik van header-bestand
 \lstinline|avr/cpufunc.h| wordt verderop uitgelegd.
@@ -779,9 +779,11 @@ kunnen enkele \textsl{atrributes} opgegeven worden.
 In tabel~\ref{tab:intinterruptvectornames} zijn de interruptvectornamen te
 zien. Deze namen moeten gebruikt worden bij de \lstinline|ISR|-macro.
 Merk op dat de reset geen vectornaam heeft. Het is namelijk niet
-mogelijk om een ISR voor de reset te coderen.
+mogelijk om een ISR voor de reset te coderen. De resetvector wordt
+door de C-compiler ingevuld en zorgt ervoor dat, na initialisatie van
+variabelen, de functie \lstinline|main()| wordt aangeroepen.
 
-\begin{table}[!ht]
+\begin{table}[H]
 \centering
 \caption{Interruptvectornamen voor ISR in `C' voor de ATmega32.}
 \label{tab:intinterruptvectornames}
@@ -814,12 +816,15 @@ vector \# & Bron          & Vectornaam \\ \midrule
 \end{tabu}
 \end{table}
 
-In listing~\ref{cod:intisrforint0} is een compleet voorbeeld gegeven voor het
-coderen van de INT0 ISR. Na het laden van de header-bestanden wordt INT0
+In listing~\ref{cod:intisrforint0} is een compleet voorbeeld gegeven van het
+gebruik van de INT0 ISR. De taak van de ISR is om pin PB0 (Port B, bit 0)
+te laten toggelen. Na het laden van de header-bestanden wordt Port B
+als uitgang gedefinieerd en wordt INT0
 ge\"initialiseerd als een flankgevoelige interrupt op de opgaande flank
-(regels 7 en 8). In regel 10 worden de interrupts vrijgegeven door het
+(regels 7 t/m 10). In regel 12 worden de interrupts vrijgegeven door het
 aanzetten van de I-vlag middels het \lstinline|sei()|-statement. Daarna
-wordt in een eeuwig durende lus gewacht middels het \lstinline|while|-statement.
+wordt in een eeuwig durende lus gewacht middels het
+\lstinline|while()|-statement.
 
 \begin{figure}[!ht]
 \begin{lstlisting}[language=C,caption=Voorbeeld van het gebruik van de INT0 interrupt service routine.,label=cod:intisrforint0]
@@ -829,17 +834,21 @@ wordt in een eeuwig durende lus gewacht middels het \lstinline|while|-statement.
 
 int main(void) {
 	
-	MCUCR = 0x03;  /* INT0 rising edge */
-	GICR  = 0x40;  /* INT0 active */
+	DDRB  = 0xff;    /* Port B as output */
 	
-	sei();         /* Free interrupts */
+	MCUCR = 0x03;    /* INT0 rising edge */
+	GICR  = 0x40;    /* INT0 active */
 	
-    while (1) {    /* Wait forever */
+	sei();           /* Free interrupts */
+	
+    while (1) {
     }
 }
 
-ISR(INT0_vect) {   /* INT0 ISR */
-	_NOP();        /* To set a breakpoint */
+ISR(INT0_vect) {     /* INT0 ISR */
+	_NOP();          /* To set a breakpoint */
+	PORTB ^= 0x01;   /* Flip PB0 */
+	_NOP();          /* To set a breakpoint */
 }
 \end{lstlisting}
 \end{figure}
@@ -865,13 +874,22 @@ geheugenplaatsen en registers aan. De compiler zou hieruit de conclusie
 kunnen trekken dat de beide instructies dus netto geen effect hebben en
 dat ze dus verwijderd kunnen worden uit de gecompileerde code.}.
 
-De ISR is gecodeerd in de regels 16 t/m 18 en heeft feitelijk \'e\'en
-statement. De macro \lstinline|_NOP()| wordt vertaald naar een assembler
+De ISR is gecodeerd in de regels 18 t/m 22 en heeft drie statements.
+De macro \lstinline|_NOP()| in de regels 19 en 21 wordt vertaald
+naar een assembler
 \lstinline|nop|-instructie. Deze macro wordt gedefinieerd door het
 header-bestand \lstinline|avr/cpufunc.h|. Het gebruik van deze macro
-is handig bij het zetten van een breakpoint tijdens debuggen.
+is handig bij het zetten van een breakpoint tijdens debuggen. Het
+statement in regel 20 zorgt ervoor dat pin PB0 (Port B, bit 0) steeds
+van waarde veranderd (toggelen). Het ``dakje''-teken \lstinline|^| 
+(Nederland: accent circonflexe, Engels: circumflex) is de 
+``C''-taalconstructie voor de EXOR-operatie. Het gehele statement
+werkt als volgt. De waarde van \lstinline|PORTB| wordt gelezen,
+de bits 1 t/m 7 wordt onveranderd overgenomen en bit 0 wordt
+ge\"inverteerd. Daarna wordt de nieuwe waarde teruggeschreven naar
+\lstinline|PORTB|.
 
-\subsubsection*{Bad Interrupt Handler}
+\subsection{Bad Interrupt Handler}
 Wat gebeurt er als een bepaalde interruptbron geactiveerd wordt maar er
 is geen ISR beschikbaar, d.w.z.\@ er is geen ISR geprogrammeerd. Als
 de betreffende interrupt geregistreerd wordt, zal de normale verwerking
@@ -895,9 +913,10 @@ ISR(BADISR_vect) {
 De standaard actie van de Bad Interrupt Handler is dat er naar de reset-vector
 wordt gesprongen. Dit kan leiden tot een problematische uitvoering van het
 programma. Het is daarom aan te bevelen om de Bad Interrupt Handler altijd
-op te nemen in het programma.
+op te nemen in het programma. Merk op dat het ontbreken van een ISR duidt op
+een programmeerfout.
 
-\subsubsection*{Interrupt prologue en epilogue}
+\subsection{Interrupt prologue en epilogue}
 In paragraaf~\ref{sec:contextswitch} is al beschreven dat tijdens het
 uitvoeren van de ISR de gebruikte registers en de vlaggen op de stack
 gezet moeten worden. De C-compiler zorgt hier automatisch voor. Dit wordt
@@ -906,3 +925,200 @@ wordt, worden de registers en de vlaggen weer van de stack gehaald.
 Ook hier zorgt de C-compiler voor. Dit wordt de \textsl{epilogue}
 genoemd. Merk op dat de C-compiler ook de \lstinline|reti|-instructie
 automatisch toevoegt. 
+
+\subsection{Naked interrupts}
+Soms is het handig om de prologue en de epilogue niet door de C-compiler
+te laten genereren, bijvoorbeeld als de interrupt met maximale snelheid
+moet worden afgehandeld. Dat kan door het toevoegen van de \textsl{attribute}
+\lstinline|ISR_NAKED|. Dit is te zien in listing~\ref{cod:intnakedisr}.
+Omdat er geen epilogue wordt gegenereerd, moet de ISR afgesloten worden
+met een \lstinline|reti|-instructie. Daar zorgt de
+\lstinline|reti()|-macro voor.
+
+\begin{figure}[!ht]
+\begin{lstlisting}[language=C,caption=Een naked interrupt voor INT0.,label=cod:intnakedisr]
+#include <avr/interrupt.h>
+
+ISR(INT0_vect, ISR_NAKED) {
+	PORTB |= _BV(0);     /* results in SBI instruction which */
+	                     /* does not affect the Status Register */
+	reti();              /* return from interrupt */
+}
+\end{lstlisting}
+\end{figure}
+
+Merk op dat het statement in regel 4 wordt omgezet in een
+\lstinline|sbi|-instructie, maar alleen als compiler-optimalisatie
+is ingeschakeld.
+
+\subsection{Interrupt attributes}
+Met attributes is de codegeneratie van de ISR aan te passen. Er zijn er vier:
+
+\begin{center}
+\renewcommand*{\arraystretch}{1.5}
+\begin{tabular}{lp{10.5cm}}
+\textbf{ISR\_BLOCK} & Deze attribute geeft aan dat de ISR wordt uitgevoerd zonder dat de Global Interrupt Enable vlag weer op 1 wordt gezet. Hierdoor wordt de ISR \textsl{atomisch} uitgevoerd, d.w.z.\@ dat de ISR niet kan worden onderbroken door een andere interrupt.\\
+\textbf{ISR\_NOBLOCK} & Deze attribute geeft aan dat de ISR wordt uitgevoerd met de Global Interrupt Enable vlag op 1. De C-compiler genereert hierdoor een \lstinline|sei|-instructie zodat interrupts weer worden uitgevoerd. De lopende ISR kan dus worden onderbroken door een andere interruptaanvraag.\\
+\textbf{ISR\_NAKED} & De prologue en de epilogue worden niet door de C-compiler gegenereerd.\\
+\textbf{ISR\_ALIASOF(\textsl{vector})} & De ISR voor \textbf{\textsl{vector}} wordt omgeleid naar de vector die is opgegeven in \lstinline|ISR()|. Hierdoor is het mogelijk om twee interrupts door dezelfde ISR af te laten handelen. Voorbeeld:\newline
+
+\lstinline|  ISR(INT1_vect, ISR_ALIASOF(INT0_vect));|\newline
+
+De vector voor INT1 wijst nu naar dezelfde ISR als die van INT0.\\
+\end{tabular}
+\end{center}
+
+\section{Codegeneratie voor de ISR}
+Het is interessant om te weten wat voor assemblercode door de compiler wordt
+gegenereerd. Hiervoor wordt het programma uit listing~\ref{cod:intisrforint0}
+gebruikt. Het eerste deel is te zien in listing~\ref{cod:intasscode1}.
+Natuurlijk is het eerste stuk gereserveerd voor de interrupt vectoren
+(regels~2 t/m~21). In regel~2 is de sprong naar het begin van het programma
+te zien (de resetvector). In regel~3 is de spronginstructie naar de ISR van 
+INT0 te zien.
+Omdat de overige interrupts niet gebruikt worden, zijn hier spronginstructies
+naar de Bad Interrupt Handler te zien. De actie van de Bad Interrupt Handler
+laat niets te raden over. Er wordt namelijk gesprongen naar de resetvector
+(regel~35).
+
+Noot: merk op dat de C-compiler de adressen in bytes presenteert en niet in
+words. Dit is goed te zien bij de resetvector. Hier staat de instructie
+\lstinline|jmp 0x54| en 0x54 gedeeld door~2 is 0x2a, het einde van de
+Interrupt Vector Table.
+
+\begin{figure}[!ht]
+\begin{lstlisting}[language=AVRassembler,caption=De interrupt vector table en opstartcode.,label=cod:intasscode1]
+00000000 <__vectors>:
+   0:	0c 94 2a 00 	jmp	0x54	; 0x54 <__ctors_end>
+   4:	0c 94 3e 00 	jmp	0x7c	; 0x7c <__vector_1>
+   8:	0c 94 34 00 	jmp	0x68	; 0x68 <__bad_interrupt>
+   c:	0c 94 34 00 	jmp	0x68	; 0x68 <__bad_interrupt>
+  10:	0c 94 34 00 	jmp	0x68	; 0x68 <__bad_interrupt>
+  14:	0c 94 34 00 	jmp	0x68	; 0x68 <__bad_interrupt>
+  18:	0c 94 34 00 	jmp	0x68	; 0x68 <__bad_interrupt>
+  1c:	0c 94 34 00 	jmp	0x68	; 0x68 <__bad_interrupt>
+  20:	0c 94 34 00 	jmp	0x68	; 0x68 <__bad_interrupt>
+  24:	0c 94 34 00 	jmp	0x68	; 0x68 <__bad_interrupt>
+  28:	0c 94 34 00 	jmp	0x68	; 0x68 <__bad_interrupt>
+  2c:	0c 94 34 00 	jmp	0x68	; 0x68 <__bad_interrupt>
+  30:	0c 94 34 00 	jmp	0x68	; 0x68 <__bad_interrupt>
+  34:	0c 94 34 00 	jmp	0x68	; 0x68 <__bad_interrupt>
+  38:	0c 94 34 00 	jmp	0x68	; 0x68 <__bad_interrupt>
+  3c:	0c 94 34 00 	jmp	0x68	; 0x68 <__bad_interrupt>
+  40:	0c 94 34 00 	jmp	0x68	; 0x68 <__bad_interrupt>
+  44:	0c 94 34 00 	jmp	0x68	; 0x68 <__bad_interrupt>
+  48:	0c 94 34 00 	jmp	0x68	; 0x68 <__bad_interrupt>
+  4c:	0c 94 34 00 	jmp	0x68	; 0x68 <__bad_interrupt>
+  50:	0c 94 34 00 	jmp	0x68	; 0x68 <__bad_interrupt>
+
+00000054 <__ctors_end>:
+  54:	11 24       	eor	r1, r1
+  56:	1f be       	out	0x3f, r1	; 63
+  58:	cf e5       	ldi	r28, 0x5F	; 95
+  5a:	d8 e0       	ldi	r29, 0x08	; 8
+  5c:	de bf       	out	0x3e, r29	; 62
+  5e:	cd bf       	out	0x3d, r28	; 61
+  60:	0e 94 36 00 	call	0x6c	; 0x6c <main>
+  64:	0c 94 52 00 	jmp	0xa4	; 0xa4 <_exit>
+
+00000068 <__bad_interrupt>:
+  68:	0c 94 00 00 	jmp	0	; 0x0 <__vectors>
+\end{lstlisting}
+\end{figure}
+
+In regels~25 en~26 wordt register R1 op 0 gezet en worden de vlaggen op 0
+gezet. De C-compiler zorgt er trouwens voor dat R1 altijd op 0 gezet blijft.
+Daarna wordt de stack pointer ge\"initialiseerd (regels~27 t/m~30). Vervolgens
+wordt de functie \lstinline|main| aangeroepen. De C-compiler is hier strikt
+in; \lstinline|main| is een functie, dus wordt het aangeroepen. Als uit
+\lstinline|main| wordt teruggekeerd, wordt naar het einde van het programma
+gesprongen.
+
+In listing~\ref{cod:intasscode2} is de assemblercode van functie
+\lstinline|main| te zien. Er zijn slechts vijf statements. In de regels~6
+en~7 wordt Port B als uitgang ingesteld. In de regels~10 t/m~14 wordt
+INT0 als flankgevoelige interrupt voor de opgaande flank ingesteld.
+Daarna worden de interrupts vrij gegeven en wordt in een eeuwig durende
+lus gewacht (regels~17 en~18).
+
+\begin{figure}[!ht]
+\begin{lstlisting}[language=AVRassembler,caption=De functie \lstinline|main|.,label=cod:intasscode2]
+0000006c <main>:
+
+int main(void) {
+	
+	DDRB  = 0xff;    /* Port B as output */
+  6c:	8f ef       	ldi	r24, 0xFF	; 255
+  6e:	87 bb       	out	0x17, r24	; 23
+	
+	MCUCR = 0x03;    /* INT0 rising edge */
+  70:	83 e0       	ldi	r24, 0x03	; 3
+  72:	85 bf       	out	0x35, r24	; 53
+	GICR  = 0x40;    /* INT0 active */
+  74:	80 e4       	ldi	r24, 0x40	; 64
+  76:	8b bf       	out	0x3b, r24	; 59
+	
+	sei();           /* Free interrupts */
+  78:	78 94       	sei
+  7a:	ff cf       	rjmp	.-2      	; 0x7a <main+0xe>
+\end{lstlisting}
+\end{figure}
+
+De C-code van de ISR bestaat uit slechts een aantal instructies maar in
+listing~\ref{cod:intasscode3} is te zien dat er behoorlijk wat assemblercode
+is geproduceerd. De prologue van de ISR is te zien in de regels~4 t/m~10.
+Eerst worden register R0 en R1 op de stack gezet. Daarna worden de vlaggen
+via R0 op de stack gezet. Vervolgens wordt de inhoud van R1 op~0 gezet.
+Kennelijk worden register R24 en R25 in de ISR gebruikt, want de prologue
+wordt afgesloten met twee \lstinline|push|-instructies die R24 en R25 op
+de stack zetten.
+
+De \lstinline|_NOP()|-macro wordt vertaald naar een assembler
+\lstinline|nop|-instructie (regels~12 en~19).
+
+De regels~14 t/m~17 laten zien hoe bit 0 van Port B wordt ge\"inverteerd.
+Port B wordt eerst geladen in register R25. Register R24 wordt geladen
+met de constante 0x01. Daarna wordt een EXOR-operatie met R24 en R25
+uitgevoerd. Vervolgens wordt de nieuwe waarde weer naar Port B geschreven.
+Merk op dat er geen \lstinline|eori|-instructie (EXOR immediate) bestaat
+zodat altijd een register moet worden gebruikt die met een constante
+moet worden geladen.
+
+In de epilogue worden register R24 en R25 weer van de stack gehaald.
+Daarna worden de vlaggen via R0 vanuit de stack weer geladen. Vervolgens
+worden register R0 en R1 van stack gehaald. Als laatste wordt de
+\lstinline|reti|-instructie uitgevoerd zodat de ISR wordt afgesloten.
+
+\begin{figure}[!ht]
+\begin{lstlisting}[language=AVRassembler,caption=De ISR voor INT0.,label=cod:intasscode3]
+0000007c <__vector_1>:
+
+ISR(INT0_vect) {     /* INT0 ISR */
+  7c:	1f 92       	push	r1
+  7e:	0f 92       	push	r0
+  80:	0f b6       	in	r0, 0x3f	; 63
+  82:	0f 92       	push	r0
+  84:	11 24       	eor	r1, r1
+  86:	8f 93       	push	r24
+  88:	9f 93       	push	r25
+	_NOP();          /* To set a breakpoint */
+  8a:	00 00       	nop
+	PORTB ^= 0x01;   /* Flip PB0 */
+  8c:	98 b3       	in	r25, 0x18	; 24
+  8e:	81 e0       	ldi	r24, 0x01	; 1
+  90:	89 27       	eor	r24, r25
+  92:	88 bb       	out	0x18, r24	; 24
+	_NOP();          /* To set a breakpoint */
+  94:	00 00       	nop
+}
+  96:	9f 91       	pop	r25
+  98:	8f 91       	pop	r24
+  9a:	0f 90       	pop	r0
+  9c:	0f be       	out	0x3f, r0	; 63
+  9e:	0f 90       	pop	r0
+  a0:	1f 90       	pop	r1
+  a2:	18 95       	reti
+\end{lstlisting}
+\end{figure}
+
+
