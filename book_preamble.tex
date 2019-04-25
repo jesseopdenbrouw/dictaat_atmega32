@@ -92,11 +92,6 @@
 %\setlist[tablenotes]{label=\tnote{\alph*},ref=\alph*,itemsep=\z@,topsep=\z@skip,partopsep=\z@skip,parsep=\z@,itemindent=\z@,labelindent=\tabcolsep,labelsep=.2em,leftmargin=*,align=left,before={\footnotesize}}
 \makeatother
 
-% Use sansmath (load before DeclareMath below because Sansmath
-% redefines the comma as:
-% \DeclareMathSymbol{,}{\mathpunct}{operators}{`\,}
-%\usepackage{sansmath}
-
 %% Use the AMS Mathematical characters, no other AMS packages required
 \usepackage{mathtools}
 \setlength{\mathindent}{1em}
@@ -176,18 +171,6 @@
 \addtolength{\aftersubsection}{-\baselineskip}
 \titlespacing*{\subsection}{0pt}{.8\baselineskip}{\aftersubsection}
 \titlespacing*{\subsubsection}{0pt}{.6\baselineskip}{0pt}
-%\titlecontents{section}[1.5em]{}{\contentslabel[\secmark\thecontentslabel]{1.5em}}{}{\titlerule*{}\bfseries\contentspage}
-%\titleformat{\section}{\normalfont\Large\bfseries}{\makebox[1.5em][l]{\secmark\thesection}}{0.4em}{}
-%\titlecontents{section}[1.5em]{}{\bfseries\contentslabel[\secmark\thecontentslabel]{1.5em}}{\hspace*{-1.5em}}{\titlerule*{}\bfseries\contentspage}
-%\usepackage{tocloft,etoolbox}
-%\makeatletter
-%\patchcmd{\l@section}{#1}{\settowidth{\mylength}{\secmark}\hspace*{-\mylength}\secmark{#1}}{}{}
-%\renewcommand\cftchappresnum{\chaptername\newline}
-%\setlength{\cftchapnumwidth}{3.5cm}
-%\renewcommand{\cfttoctitlefont}{\fontfamily{phv}\selectfont\Huge\bfseries\scshape}
-%\renewcommand{\cftaftertoctitle}{}
-%\setlength{\cftbeforetoctitleskip}{\baselineskip}
-%\setlength{\cftaftertoctitleskip}{\aftersubsection}
 %% Remove page number on first page of ToC
 \AtBeginDocument{\addtocontents{toc}{\protect\thispagestyle{fancy}}}
 %% Make space for page number in TOC wider
@@ -195,7 +178,6 @@
 \renewcommand\@pnumwidth{1cm}
 \makeatother
 %% Wider chapnum and secnum
-%\renewcommand*\cftchapnumwidth{2em}
 \renewcommand*\cftsecnumwidth{3em}
 
 % http://archive.cs.uu.nl/mirror/CTAN/macros/latex/contrib/footmisc/footmisc.pdf
@@ -286,7 +268,7 @@
   numberstyle=\tiny\color{gray},
   stepnumber=1,                           
   numbersep=8pt,
-  backgroundcolor=\color{lightpink},
+  backgroundcolor=\color{DarkOliveGreen1!60!white},
   showspaces=false,
   showstringspaces=false,
   showtabs=false,
@@ -350,27 +332,12 @@
 \newcommand\logbase[1]{\mathop{{}^{#1}\mathrm{log}}}
 
 %% To input and print files.
-%% \booklising{lang}{caption}{filename}{ext}{floatplace}
-%%%\newcommand{\booklisting}[5]{%
-%%%\begin{figure}[#5]%
-%%%\lstinputlisting[language=#1,caption={#2.},label=cod:#3]{code/#3.#4}%
-%%%\vspace*{-\baselineskip}
-%%%\end{figure}%
-%%%}
 \newcommand{\booklisting}[6][]{%
 \begin{figure}[#6]%
 \lstinputlisting[language=#2,caption={#3.},label=cod:#4,#1]{code/#4.#5}%
 \vspace*{-\baselineskip}
 \end{figure}%
 }
-%\lstinputlisting[language=#1,caption={#2.},label=cod:#3,float]{code/#3.vhd}%
-%\lstinputlisting[language=#1,caption={#2.},label=cod:#3,float,floatplacement=h]{code/#3.vhd}%
-%\begin{minipage}{\textwidth}%
-%\lstinputlisting[language=#1,caption={#2.},label=cod:#3]{code/#3.vhd}%
-%\end{minipage}%
-%%% werkt niet
-%%%\captionsetup{belowskip=100pt}
-%%%\setlength{\abovecaptionskip}{-100pt plus 0pt minus 0pt}
 
 \newcommand{\lstmodelsim}[1]{\lstinline[language=modelsim]|#1|}   %[
 \newcommand{\lstvhdl}[1]{\lstinline[language=vhdl]|#1|}   %[
@@ -542,7 +509,7 @@
 
 %% The title page
 \def\maketitle{%
-\pagecolor{Sienna2}%
+\pagecolor{OliveDrab3}%
 \null%
   \hbox{%
   \hspace*{0.05\textwidth}%
