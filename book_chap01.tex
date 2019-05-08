@@ -109,21 +109,13 @@ De I-vlag is gepositioneerd op bit 7 van het Status Register (SREG). Zie
 figuur~\ref{fig:intsregregisterlayout}.
 
 %%%% SREG
-\begin{figure}[!ht]
-\renewcommand\arraystretch{1.4}
-%\footnotesize
-\scriptsize
-\centering
-\begin{tabu} to 0.9\textwidth {X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]}
+\begin{registerdef}{Het Status Register SREG}{fig:intsregregisterlayout}
 7 & 6 & 5 & 4 & 3 & 2 & 1 & 0 \\
 \hline
 \multicolumn{1}{|c}{I} & \multicolumn{1}{|c}{T} & \multicolumn{1}{|c}{H} & \multicolumn{1}{|c}{S} & \multicolumn{1}{|c}{V} & \multicolumn{1}{|c}{N} & \multicolumn{1}{|c}{Z} & \multicolumn{1}{|c|}{C} \\ \hline
 R/W & R/W & R/W & R/W & R/W & R/W & R/W & R/W \\
 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
-\end{tabu}
-\caption{Het Status Register SREG.}
-\label{fig:intsregregisterlayout}
-\end{figure}
+\end{registerdef}
 %%%% SREG
 
 Pas na het initialiseren van de stack pointer mag de instructie
@@ -232,7 +224,7 @@ vector \# & ROM-adres & Bron          & Omschrijving \\ \midrule
 21        & 0x028     & SPM\_RDY      & Store Program Memory Ready \\
 \bottomrule
 \end{tabu}
-Noot: het ROM-adres is in words.
+\raggedright Noot: het ROM-adres is in words.
 \end{table}
 
 
@@ -352,21 +344,13 @@ daadwerkelijk te laten plaatsvinden. De indeling van het GICR is te vinden in
 figuur~\ref{fig:intgicr}. Alleen de bits 5, 6 en~7 zijn van belang. 
 
 %%%% GICR
-\begin{figure}[!ht]
-\renewcommand\arraystretch{1.4}
-%\footnotesize
-\scriptsize
-\centering
-\begin{tabu} to 0.9\textwidth {X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]}
+\begin{registerdef}{Het GICR register}{fig:intgicr}
 7 & 6 & 5 & 4 & 3 & 2 & 1 & 0 \\
 \hline
-\multicolumn{1}{|c}{INT1} & \multicolumn{1}{|c}{INT0} & \multicolumn{1}{|c}{INT2} & \multicolumn{1}{|c}{\cellcolor{lightgrey} $-$} & \multicolumn{1}{|c}{\cellcolor{lightgrey} $-$} & \multicolumn{1}{|c}{\cellcolor{lightgrey} $-$} & \multicolumn{1}{|c}{\cellcolor{lightgrey} IVSEL} & \multicolumn{1}{|c|}{\cellcolor{lightgrey} IVCE} \\ \hline
+\multicolumn{1}{|c}{INT1} & \multicolumn{1}{|c}{INT0} & \multicolumn{1}{|c}{INT2} & \multicolumn{1}{|c}{\cellcolor{regcell} $-$} & \multicolumn{1}{|c}{\cellcolor{regcell} $-$} & \multicolumn{1}{|c}{\cellcolor{regcell} $-$} & \multicolumn{1}{|c}{\cellcolor{regcell} IVSEL} & \multicolumn{1}{|c|}{\cellcolor{regcell} IVCE} \\ \hline
 R/W & R/W & R/W & R & R & R & R/W & R/W \\
 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
-\end{tabu}
-\caption{Het GICR register.}
-\label{fig:intgicr}
-\end{figure}
+\end{registerdef}
 %%%% GICR
 
 In listing~\ref{cod:intenableint0} is te zien hoe INT0 geactiveerd wordt.
@@ -393,21 +377,14 @@ interrupt (INT0, INT1) de bijbehorende bits in het GIFR-register niet op
 ingelezen.
 
 %%%% GIFR
-\begin{figure}[!ht]
-\renewcommand\arraystretch{1.4}
-%\footnotesize
-\scriptsize
-\centering
-\begin{tabu} to 0.9\textwidth {X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]}
+\begin{registerdef}{Het GIFR register}{fig:intgifr}
 7 & 6 & 5 & 4 & 3 & 2 & 1 & 0 \\
 \hline
-\multicolumn{1}{|c}{INTF1} & \multicolumn{1}{|c}{INTF0} & \multicolumn{1}{|c}{INTF2} & \multicolumn{1}{|c}{\cellcolor{lightgrey} $-$} & \multicolumn{1}{|c}{\cellcolor{lightgrey} $-$} & \multicolumn{1}{|c}{\cellcolor{lightgrey} $-$} & \multicolumn{1}{|c}{\cellcolor{lightgrey} $-$} & \multicolumn{1}{|c|}{\cellcolor{lightgrey} $-$} \\ \hline
+\multicolumn{1}{|c}{INTF1} & \multicolumn{1}{|c}{INTF0} & \multicolumn{1}{|c}{INTF2} & \multicolumn{1}{|c}{\cellcolor{regcell} $-$} & \multicolumn{1}{|c}{\cellcolor{regcell} $-$} & \multicolumn{1}{|c}{\cellcolor{regcell} $-$} & \multicolumn{1}{|c}{\cellcolor{regcell} $-$} & \multicolumn{1}{|c|}{\cellcolor{regcell} $-$} \\ \hline
 R/W & R/W & R/W & R & R & R & R & R \\
 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
-\end{tabu}
-\caption{Het GIFR register.}
-\label{fig:intgifr}
-\end{figure}
+
+\end{registerdef}
 %%%% GIFR
 
 Merk op dat een bit in het GIFR-register door software op 0 kan worden gezet
@@ -423,21 +400,13 @@ MCU Control Register (MCUCR). De indeling van dit register is te zien
 in figuur~\ref{fig:intmcucr}. 
 
 %%%% MCUCR
-\begin{figure}[!ht]
-\renewcommand\arraystretch{1.4}
-%\footnotesize
-\scriptsize
-\centering
-\begin{tabu} to 0.9\textwidth {X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]}
+\begin{registerdef}{Het MCUCR register}{fig:intmcucr}
 7 & 6 & 5 & 4 & 3 & 2 & 1 & 0 \\
 \hline
-\multicolumn{1}{|c}{\cellcolor{lightgrey} SE} & \multicolumn{1}{|c}{\cellcolor{lightgrey} SM2} & \multicolumn{1}{|c}{\cellcolor{lightgrey} SM1} & \multicolumn{1}{|c}{\cellcolor{lightgrey} SM0} & \multicolumn{1}{|c}{ISC11} & \multicolumn{1}{|c}{ISC10} & \multicolumn{1}{|c}{ISC01} & \multicolumn{1}{|c|}{ISC00} \\ \hline
+\multicolumn{1}{|c}{\cellcolor{regcell} SE} & \multicolumn{1}{|c}{\cellcolor{regcell} SM2} & \multicolumn{1}{|c}{\cellcolor{regcell} SM1} & \multicolumn{1}{|c}{\cellcolor{regcell} SM0} & \multicolumn{1}{|c}{ISC11} & \multicolumn{1}{|c}{ISC10} & \multicolumn{1}{|c}{ISC01} & \multicolumn{1}{|c|}{ISC00} \\ \hline
 R/W & R/W & R/W & R/W & R/W & R/W & R/W & R/W \\
 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
-\end{tabu}
-\caption{Het MCUCR register.}
-\label{fig:intmcucr}
-\end{figure}
+\end{registerdef}
 %%%% MCUCR
 
 \textbf{Bit 3, 2 – ISC11, ISC10: Interrupt Sense Control 1 bit 1 en bit 0} \\
@@ -471,7 +440,6 @@ ISC11 & ISC10 & & Omschrijving \\ \midrule
 \end{tabular}
 \end{table}
 
-\newpage
 In listing~\ref{cod:intenablerisingedgeint1} is te zien hoe INT1 wordt
 ingesteld voor het herkennen van een opgaande flank om een interrupt te
 genereren.
@@ -515,21 +483,13 @@ dus niet bemonsterd op klokflanken van de systeemklok. De aanvraag wordt
 wel verwerkt op de flanken van de systeemklok.
 
 %%%% MCUCSR
-\begin{figure}[!ht]
-\renewcommand\arraystretch{1.4}
-%\footnotesize
-\scriptsize
-\centering
-\begin{tabu} to 0.9\textwidth {X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]}
+\begin{registerdef}{Het MCUCSR register}{fig:intmcucsr}
 7 & 6 & 5 & 4 & 3 & 2 & 1 & 0 \\
 \hline
-\multicolumn{1}{|c}{\cellcolor{lightgrey} JTD} & \multicolumn{1}{|c}{ISC2} & \multicolumn{1}{|c}{\cellcolor{lightgrey} $-$} & \multicolumn{1}{|c}{\cellcolor{lightgrey} JTRF} & \multicolumn{1}{|c}{\cellcolor{lightgrey} WDRF} & \multicolumn{1}{|c}{\cellcolor{lightgrey} BORF} & \multicolumn{1}{|c}{\cellcolor{lightgrey} EXTRF} & \multicolumn{1}{|c|}{\cellcolor{lightgrey} PORF} \\ \hline
+\multicolumn{1}{|c}{\cellcolor{regcell} JTD} & \multicolumn{1}{|c}{ISC2} & \multicolumn{1}{|c}{\cellcolor{regcell} $-$} & \multicolumn{1}{|c}{\cellcolor{regcell} JTRF} & \multicolumn{1}{|c}{\cellcolor{regcell} WDRF} & \multicolumn{1}{|c}{\cellcolor{regcell} BORF} & \multicolumn{1}{|c}{\cellcolor{regcell} EXTRF} & \multicolumn{1}{|c|}{\cellcolor{regcell} PORF} \\ \hline
 R/W & R/W & R & R/W & R/W & R/W & R/W & R/W \\
 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
-\end{tabu}
-\caption{Het MCUCSR register.}
-\label{fig:intmcucsr}
-\end{figure}
+\end{registerdef}
 %%%% MCUCSR
 
 \textbf{Bit 6 - ISC2: Interrupt Sense Control 2}\\
@@ -783,7 +743,7 @@ mogelijk om een ISR voor de reset te coderen. De resetvector wordt
 door de C-compiler ingevuld en zorgt ervoor dat, na initialisatie van
 variabelen, de functie \lstinline|main()| wordt aangeroepen.
 
-\begin{table}[H]
+\begin{table}[!ht]
 \centering
 \caption{Interruptvectornamen voor ISR in `C' voor de ATmega32.}
 \label{tab:intinterruptvectornames}
