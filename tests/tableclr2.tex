@@ -1,0 +1,56 @@
+\documentclass{article}
+
+\usepackage[table]{xcolor}
+\usepackage{tabularx}
+\usepackage{multirow}
+\definecolor{lightgrey}{RGB}{142,152,6}
+
+\usepackage{array}
+%\newcolumntype{Y}{>{\centering\arraybackslash}X}
+\newcolumntype{Y}{X}
+
+
+\newenvironment{registerdef}[3][!ht]{
+\edef\regdefa{#2}
+\edef\regdefb{#3}
+\figure[#1]
+\renewcommand\arraystretch{1.4}
+\scriptsize
+\centering
+\tabularx{0.9\textwidth}{YYYYYYYY}
+}{
+\endtabularx
+\caption{\regdefa.}
+\label{\regdefb}
+\endfigure
+}
+
+
+\begin{document}
+
+\begin{figure}[!ht]
+\renewcommand\arraystretch{1.4}
+\scriptsize
+\centering
+\begin{tabularx}{0.9\textwidth}{YYYYYYYY}
+7 & 6 & 5 & 4 & 3 & 2 & 1 & 0 \\
+\hline
+\multicolumn{1}{|c}{\cellcolor{lightgrey} JTD} & \multicolumn{1}{|c}{ISC2} & \multicolumn{1}{|c}{\cellcolor{lightgrey} $-$} & \multicolumn{1}{|c}{\cellcolor{lightgrey} JTRF} & \multicolumn{1}{|c}{\cellcolor{lightgrey} WDRF} & \multicolumn{1}{|c}{\cellcolor{lightgrey} BORF} & \multicolumn{1}{|c}{\cellcolor{lightgrey} EXTRF} & \multicolumn{1}{|c|}{\cellcolor{lightgrey} PORF} \\ \hline
+R/W & R/W & R & R/W & R/W & R/W & R/W & R/W \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+\end{tabularx}
+\caption{Position of the ISC2 bit in the MCUCSR register.}
+\label{fig:intmcucsr}
+\end{figure}
+
+In tabel~\ref{fig:test}...
+
+\begin{registerdef}{Het register}{fig:test}
+7 & 6 & 5 & 4 & 3 & 2 & 1 & 0 \\
+\hline
+\multicolumn{1}{|c}{\cellcolor{lightgrey} JTD} & \multicolumn{1}{|c}{ISC2} & \multicolumn{1}{|c}{\cellcolor{lightgrey} $-$} & \multicolumn{1}{|c}{\cellcolor{lightgrey} JTRF} & \multicolumn{1}{|c}{\cellcolor{lightgrey} WDRF} & \multicolumn{1}{|c}{\cellcolor{lightgrey} BORF} & \multicolumn{1}{|c}{\cellcolor{lightgrey} EXTRF} & \multicolumn{1}{|c|}{\cellcolor{lightgrey} PORF} \\ \hline
+R/W & R/W & R & R/W & R/W & R/W & R/W & R/W \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+\end{registerdef}
+
+\end{document}

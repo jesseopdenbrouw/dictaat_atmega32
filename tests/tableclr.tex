@@ -1,0 +1,24 @@
+\documentclass{article}
+
+\usepackage[table]{xcolor}
+\usepackage{tabu}
+\usepackage{multirow}
+\colorlet{lightgrey}{lightgray}
+
+\begin{document}
+
+\begin{figure}[!ht]
+\renewcommand\arraystretch{1.4}
+\scriptsize
+\centering
+\begin{tabu} to 0.9\textwidth {X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]}
+7 & 6 & 5 & 4 & 3 & 2 & 1 & 0 \\
+\hline
+\multicolumn{1}{|c}{\cellcolor{lightgrey} JTD} & \multicolumn{1}{|c}{ISC2} & \multicolumn{1}{|c}{\cellcolor{lightgrey} $-$} & \multicolumn{1}{|c}{\cellcolor{lightgrey} JTRF} & \multicolumn{1}{|c}{\cellcolor{lightgrey} WDRF} & \multicolumn{1}{|c}{\cellcolor{lightgrey} BORF} & \multicolumn{1}{|c}{\cellcolor{lightgrey} EXTRF} & \multicolumn{1}{|c|}{\cellcolor{lightgrey} PORF} \\ \hline
+R/W & R/W & R & R/W & R/W & R/W & R/W & R/W \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+\end{tabu}
+\caption{Position of the ISC2 bit in the MCUCSR register.}
+\label{fig:intmcucsr}
+\end{figure}
+\end{document}
