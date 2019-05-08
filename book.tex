@@ -21,19 +21,27 @@
 %% Nice text on empty pages, or not...
 \newcommand{\thispageintentionallyleftblank}{Deze pagina is opzettelijk leeg gelaten.}
 %\newcommand{\thispageintentionallyleftblank}{}
-%%\newcommand{\bookuseadvanded}{\useadvancedfalse}
+\newcommand{\bookuseadvanded}{\useadvancedfalse}
 %% Pick one or none, placed in outer upper corner
 \newcommand{\finalconceptdraft}{CONCEPT}
 
+\newcommand{\bookpartI}{\usebookpartIfalse}
+\newcommand{\bookpartII}{\usebookpartIItrue}
+\newcommand{\bookpartIII}{\usebookpartIIIfalse}
+\newcommand{\bookasbook}{\usebookasbookfalse}
 
-\input{book_preamble.tex}
-\input{lstlangAVR.tex}
 
-\usepackage{booktabs}
+
+\input{book_preamble}
+\input{book_preamble_atmega}
+\input{lstlangAVR}
+
+\listfiles
 
 \begin{document}
+\input{book_title}
 \raggedbottom
-\maketitle
+%\maketitle
 
 %\input{book_toc}
 
@@ -41,5 +49,6 @@
 
 \setcounter{chapter}{1}
 %\input{book_chap02}
+
 
 \end{document}
