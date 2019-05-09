@@ -27,11 +27,13 @@ zijn). Als blijkt dat de minst significante bit een~0 is, dan zorgt de
 wordt gesprongen. Is de minst significante bit een~1, dan wordt de lus
 verlaten en wordt de eerstvolgende instructie uitgevoerd. 
 
+\begin{figure}[!ht]
 \begin{lstlisting}[language=AVRassembler,caption=Polling.,label=cod:intpolling]
 loop:	in   r16,PINA   ; read in pins Port A
 		andi r16,0x01   ; filter LSB, Z-flag = 1 if bit = 0
 		breq loop       ; again if bit is 0
 \end{lstlisting}
+\end{figure}
 
 Deze manier van detectie werkt eenvoudig en snel. Het programma (de wachtlus)
 is eenvoudig en er zijn slechts enkele klokpulsen nodig om de status van een
@@ -58,9 +60,22 @@ moment wordt er een interrupt geregistreerd door de processor. Het lopende
 programma wordt verlaten en de processor gaat de ISR uitvoeren. Aan het einde
 van de ISR wordt teruggekeerd naar het lopende programma \textsf{H}.
 
+%\begin{figure}[!ht]
+%\centering
+%\includegraphics[scale=\figscale]{images/intsimpleinterruptdispatch}
+%\caption{Eenvoudige voorstelling van een interruptafhandeling.}
+%\label{fig:intsimpleinterruptdispatch}
+%\end{figure}
+
 \begin{figure}[!ht]
 \centering
-\includegraphics[scale=\figscale]{images/intsimpleinterruptdispatch}
+\begin{tikzpicture}[line width=1pt,font=\sffamily\footnotesize,-latex,scale=0.80]
+\draw (0,0)  node (H) [above] {H}  -- (0,-2) node (irq) [left] {irq \rotatebox[origin=c]{150}{\Large\Lightning}};
+\draw (0,-2) -- (3,0) node[above] {ISR};
+\draw (3,0)  -- (3,-4) node[below] {return};
+\draw (3,-4) -- (0,-2);
+\draw (0,-2) -- (0,-4);
+\end{tikzpicture}
 \caption{Eenvoudige voorstelling van een interruptafhandeling.}
 \label{fig:intsimpleinterruptdispatch}
 \end{figure}
@@ -87,12 +102,29 @@ figuur~\ref{fig:intinterruptdispatchwithstackandiflag}. Omdat het
 terugkeeradres op de stack wordt gezet, moet de stack pointer (SP) worden
 ge\"initialiseerd v\'o\'ordat de interrupts mogen worden afgehandeld. Dat
 betekent dat direct na het starten van het lopende programma, bijvoorbeeld
-na een reset, de interrupts nog niet mogen worden afgehandeld omdat de
+na een reset, de interrupts afgeschakeld zijn omdat de
 stack pointer nog niet is ge\"initialiseerd.
+
+%\begin{figure}[!ht]
+%\centering
+%\includegraphics[scale=\figscale]{images/intinterruptdispatchwithstackandiflag}
+%\caption{Interruptafhandeling: de program counter wordt op de stack gezet.}
+%\label{fig:intinterruptdispatchwithstackandiflag}
+%\end{figure}
 
 \begin{figure}[!ht]
 \centering
-\includegraphics[scale=\figscale]{images/intinterruptdispatchwithstackandiflag}
+\begin{tikzpicture}[line width=1pt,font=\sffamily\footnotesize,-latex,scale=0.80]
+\draw (0,0)  node (H) [above] {H}  -- (0,-2) node (irq) [left] {irq \rotatebox[origin=c]{150}{\Lightning}};
+\draw (0,-2) -- (3,0) node[above] {ISR} node [right, xshift=.5cm] {I $\leftarrow$ 0, PC op stack};
+\draw (3,0)  -- (3,-4) node[below] {reti} node [right, xshift=.5cm] {I $\leftarrow$ 1, PC van stack};
+\draw (3,-4) -- (0,-2);
+\draw (0,-2) -- (0,-4);
+\draw[-] (11,-1) -- ++(0,-1)
+         rectangle node[xshift=-1.4cm] {sp $\longrightarrow$} ++(1.5,-0.5)
+         rectangle ++(-1.5,-0.5) node[pos=.5] {h}
+++(1.5,1) -- ++(0,1);
+\end{tikzpicture}
 \caption{Interruptafhandeling: de program counter wordt op de stack gezet.}
 \label{fig:intinterruptdispatchwithstackandiflag}
 \end{figure}
@@ -106,7 +138,8 @@ afgehandeld.
 geblokkeerd.
 
 De I-vlag is gepositioneerd op bit 7 van het Status Register (SREG). Zie
-figuur~\ref{fig:intsregregisterlayout}.
+figuur~\ref{fig:intsregregisterlayout}. Het Status Register is in het I/O-geheugen
+te vinden op adres 0x3f.
 
 %%%% SREG
 \begin{registerdef}{Het Status Register SREG}{fig:intsregregisterlayout}
@@ -169,9 +202,29 @@ springen en van daaruit naar de eigenlijk ISR. Het gebruik van de
 Interrupt Vector Table is weergegeven in
 figuur~\ref{fig:intinterruptdispatchwithvectortable}.
 
+%\begin{figure}[!ht]
+%\centering
+%\includegraphics[scale=\figscale]{images/intinterruptdispatchwithvectortable}
+%\caption{Interruptafhandeling: gebruik van de Interrupt Vector Table.}
+%\label{fig:intinterruptdispatchwithvectortable}
+%\end{figure}
+
 \begin{figure}[!ht]
 \centering
-\includegraphics[scale=\figscale]{images/intinterruptdispatchwithvectortable}
+\begin{tikzpicture}[line width=1pt,font=\sffamily\footnotesize,-latex,scale=0.80]
+\draw (0,0)  node (H) [above] {H}  -- (0,-2) node (irq) [left] {irq \rotatebox[origin=c]{150}{\Lightning}};
+\draw (3,0) rectangle ++(1.5,-0.4) node[above,pos=0.5,yshift=2mm,align=center] {Interrupt\\Vector\\Table}
+            rectangle ++(-1.5,-0.4)
+            rectangle ++(1.5,-0.4) node[pos=0.5] (A) {}
+			rectangle ++(-1.5,-0.4)
+               --     ++(0,-1)
+  ++(1.5,1)    --     ++(0,-1);
+\draw (0,-2) -- (3,-1);
+\draw (0,-2) -- (0,-4);
+\draw (A) -- (7,-1) node [above] {ISR} node [right, xshift=.5cm] {I $\leftarrow$ 0, PC op stack};
+\draw (7,-1) -- (7,-4) node[below] {reti} node [right, xshift=.5cm] {I $\leftarrow$ 1, PC van stack};
+\draw (7,-4) -- (0,-2);
+\end{tikzpicture}
 \caption{Interruptafhandeling: gebruik van de Interrupt Vector Table.}
 \label{fig:intinterruptdispatchwithvectortable}
 \end{figure}
@@ -224,7 +277,7 @@ vector \# & ROM-adres & Bron          & Omschrijving \\ \midrule
 21        & 0x028     & SPM\_RDY      & Store Program Memory Ready \\
 \bottomrule
 \end{tabu}
-\raggedright Noot: het ROM-adres is in words.
+\raggedright\footnotesize Noot: het ROM-adres is in words.
 \end{table}
 
 
@@ -235,6 +288,28 @@ interrupts gekoppeld. De interrupt die op dat moment niet wordt uitgevoerd,
 moet wachten totdat de uitgevoerde interrupt afgehandeld is. Komt er echter
 in de tussentijd een interrupt binnen met een lagere Interrupt Vector
 dan wordt die weer als eerste uitgevoerd.
+
+
+\section{Interruptresponstijd}
+De responstijd voor alle ingeschakelde interrupts van de ATmega32 is minimaal
+vier klokcycli. Tijdens deze vier klokcycli wordt de program counter op de
+stack geplaatst (twee bytes) en wordt de program counter geladen met het
+vectoradres van de interrupt. Na vier klokcycli wordt gesprongen naar het
+vectoradres van de interrupt die wordt verwerkt. De instructie op de vector
+is normaal gesproken een sprong naar de interruptroutine en deze sprong duurt
+drie klokcycli voor een \lstinline|jmp|-instructie en twee klokcycli voor een
+\lstinline|rjmp|-instructie.
+
+Als een interrupt optreedt tijdens de uitvoering van een instructie met
+meerdere klokcycli dan wordt deze instructie afgemaakt voordat de interrupt
+wordt verwerkt. Staat de ATmega32 in slaapstand dan wordt de responstijd met
+vier klokcycli verhoogd. Deze verhoging komt bovenop de opstarttijd van de
+geselecteerde slaapmodus.
+
+Een terugkeer (return) uit een interruptroutine duurt vier klokcycli. Tijdens
+deze vier klokcycli wordt de program counter van de stack gehaald (twee bytes)
+en wordt de stack pointer met twee verhoogd. Tevens wordt de I-bit in het
+statusregister op 1 gezet.
 
 
 \section{Stappen in de interruptverwerking}
@@ -259,26 +334,67 @@ stappen genomen:
 \end{enumerate}
 
 
-\section{Interruptresponstijd}
-De responstijd voor alle ingeschakelde interrupts van de ATmega32 is minimaal
-vier klokcycli. Tijdens deze vier klokcycli wordt de program counter op de
-stack geplaatst (twee bytes) en wordt de program counter geladen met het
-vectoradres van de interrupt. Na vier klokcycli wordt gesprongen naar het
-vectoradres van de interrupt die wordt verwerkt. De instructie op de vector
-is normaal gesproken een sprong naar de interruptroutine en deze sprong duurt
-drie klokcycli voor een \lstinline|jmp|-instructie en twee klokcycli voor een
-\lstinline|rjmp|-instructie.
+\section{Algemene opzet interruptafhandeling}
+In listing~\ref{cod:intgenericsetup} is de algemene opzet te zien voor een
+programma met een interrupt. In regel 3 wordt het ROM-adres op 0x000 gezet.
+Dat is de plek van de reset-vector. Op die plek wordt een spronginstructie
+naar het begin van het eigenlijke programma gezet. In regel 7 wordt het
+ROM-adres op het adres van de interruptvector gezet. We kunnen dit adres
+vinden in tabel~\ref{tab:intinterruptvectortable}. Ook hier wordt een
+spronginstructie gezet, nu naar het begin van de ISR (regel 9).
 
-Als een interrupt optreedt tijdens de uitvoering van een instructie met
-meerdere klokcycli dan wordt deze instructie afgemaakt voordat de interrupt
-wordt verwerkt. Staat de ATmega32 in slaapstand dan wordt de responstijd met
-vier klokcycli verhoogd. Deze verhoging komt bovenop de opstarttijd van de
-geselecteerde slaapmodus.
+Nadat alle interruptvectoren voorzien zijn van spronginstructies, volgt de
+code voor het initialiseren van de stack pointer. Dit is te zien in de
+regels~15 t/m~18. Daarna volgen de instructies die de interruptbron nog
+specifiek instellen. Te denken valt aan flankgevoeligheid van het interruptsignaal.
+Deze specifieke instellingen worden in I/O-registers ingesteld.
 
-Een terugkeer (return) uit een interruptroutine duurt vier klokcycli. Tijdens
-deze vier klokcycli wordt de program counter van de stack gehaald (twee bytes)
-en wordt de stack pointer met twee verhoogd. Tevens wordt de I-bit in het
-statusregister op 1 gezet.
+Als alle instellingen zijn gedaan, worden de interrupt vrijgegeven door middel
+van een \lstinline|sei|-instructie (regel 24). Daarna volgt het hoofdprogramma.
+Dit is meestal een eeuwig durende lus (regels 27 t/m 29). Daarna worden de
+instructies van de ISR geplaatst. Dat hoeft niet per se na de hoofdprogrammalus,
+maar dat wordt wel vaak gedaan. De ISR eindigt met een \lstinline|reti|-instructie
+(regel 34).
+
+\begin{figure}[!t]
+\begin{lstlisting}[language=AVRassembler,caption=Algemene opzet voor gebruik van interrupts.,label=cod:intgenericsetup]
+.def temp = r16
+
+.org 0x000
+        ; reset vector
+		rjmp reset
+
+.org <address in vector table>
+        ; ISR vector for ...
+		rjmp isr
+
+.org 0x02a
+        ; Program starts here
+reset:
+		; set up stack pointer
+		ldi	 temp,low(RAMEND)
+		out	 SPL,temp
+		ldi	 temp,high(RAMEND)
+		out	 SPH,temp
+		
+        ; Specific set up for interrupt
+        ...
+
+		; enable interrupts
+		sei
+
+		; main program loop
+loop:   ...
+        ...
+        rjmp loop
+
+isr:    ; ISR code
+        ...
+        ...
+ 		reti
+\end{lstlisting}
+\end{figure}
+
 
 \section{Context switch}
 \label{sec:contextswitch}
@@ -324,8 +440,8 @@ gehaald worden. Let daarbij op de volgorde van de registers.
 
 \section{Externe interrupts}
 De ATmega32 kent drie externe interrupts genaamd INT0, INT1 en INT2. Deze
-interrupts zijn fysiek verbonden met Port D, bit 2 (PD2, INT0), Port D, bit
-3 (PD3, INT1) en Port B, bit 2 (PB2, INT2). INT0 en INT1 kunnen zowel op een
+interrupts zijn fysiek verbonden met Port~D, bit~2 (PD2, INT0), Port~D, bit~3
+(PD3, INT1) en Port~B, bit~2 (PB2, INT2). INT0 en INT1 kunnen zowel op een
 laag niveau als op flanken reageren. INT2 kan alleen op flanken reageren.
 Zoals te
 zien in tabel~\ref{tab:intinterruptvectortable} worden de vectoradressen
@@ -914,19 +1030,18 @@ is ingeschakeld.
 \subsection{Interrupt attributes}
 Met attributes is de codegeneratie van de ISR aan te passen. Er zijn er vier:
 
-\begin{center}
 \renewcommand*{\arraystretch}{1.5}
-\begin{tabular}{lp{10.5cm}}
+\begin{longtable}[!ht]{@{}lp{10.5cm}}
 \textbf{ISR\_BLOCK} & Deze attribute geeft aan dat de ISR wordt uitgevoerd zonder dat de Global Interrupt Enable vlag weer op 1 wordt gezet. Hierdoor wordt de ISR \textsl{atomisch} uitgevoerd, d.w.z.\@ dat de ISR niet kan worden onderbroken door een andere interrupt.\\
 \textbf{ISR\_NOBLOCK} & Deze attribute geeft aan dat de ISR wordt uitgevoerd met de Global Interrupt Enable vlag op 1. De C-compiler genereert hierdoor een \lstinline|sei|-instructie zodat interrupts weer worden uitgevoerd. De lopende ISR kan dus worden onderbroken door een andere interruptaanvraag.\\
 \textbf{ISR\_NAKED} & De prologue en de epilogue worden niet door de C-compiler gegenereerd.\\
-\textbf{ISR\_ALIASOF(\textsl{vector})} & De ISR voor \textbf{\textsl{vector}} wordt omgeleid naar de vector die is opgegeven in \lstinline|ISR()|. Hierdoor is het mogelijk om twee interrupts door dezelfde ISR af te laten handelen. Voorbeeld:\newline
+\textbf{ISR\_ALIASOF(\textsl{vector})} & De ISR voor \textbf{\textsl{vector}} wordt omgeleid naar de vector die is opgegeven in \lstinline|ISR()|. Hierdoor is het mogelijk om twee interrupts door dezelfde ISR af te laten handelen. Voorbeeld:\vspace*{.5\baselineskip}
 
-\lstinline|  ISR(INT1_vect, ISR_ALIASOF(INT0_vect));|\newline
+\lstinline|  ISR(INT1_vect, ISR_ALIASOF(INT0_vect));|\vspace*{.5\baselineskip}
 
 De vector voor INT1 wijst nu naar dezelfde ISR als die van INT0.\\
-\end{tabular}
-\end{center}
+\end{longtable}
+\renewcommand*{\arraystretch}{1.0}
 
 \section{Codegeneratie voor de ISR}
 Het is interessant om te weten wat voor assemblercode door de compiler wordt
