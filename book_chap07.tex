@@ -1,17 +1,19 @@
 \chapter{Timer/Counters}
 \label{cha:timercounters}
-In veel applicaties moet even gewacht worden zodat als voorbeeld elke seconde een
-meting kan worden meting gedaan. Soms moet er een bepaalde tijd worden afgemeten,
-bijvoorbeeld om een waterklep \'e\'n seconde open te houden. Het meten van deze
-tijd (wachten) is op te lossen door
-middel van de bekende wachtlus. De processor kan dan echter geen andere taken
-uitvoeren en dat is in veel situaties w\'el gewenst. Denk hierbij aan Real Time
+In veel applicaties moet even gewacht worden zodat bijvoorbeeld elke minuut een
+meting kan worden gedaan.
+% Soms moet er een bepaalde tijd worden afgemeten,
+%bijvoorbeeld om een waterklep één seconde open te houden.
+ Het meten van deze
+tijd (wachten) is op te lossen door middel van de bekende wachtlus (zie paragraaf~%
+\textbf{??}). De processor kan dan echter geen andere taken
+uitvoeren en dat is in veel situaties wél gewenst. Denk hierbij aan Real Time
 systemen en besturingssystemen. Beter is deze tijd hardwarematig te meten.
 Een \textsl{timer} kan dan uitkomst bieden. Een timer is niets anders dan een teller
 die op iedere klokpuls, bijvoorbeeld van de systeemklok, wordt verhoogd. Na een bepaald
 aantal klokpulsen heeft de timer de hoogste stand bereikt en begint weer opnieuw.
-Er wordt dan een overflow-signaal afgegeven. Dit signaal genereert, indien geactiveerd,
-een interrupt.
+Er wordt dan een signaal aan de processor afgegeven. Dit signaal genereert, indien geactiveerd, een interrupt, waardoor de processor zijn hoofdprogramma verlaat en een
+Interrupt Service Routine gaat uitvoeren.
 
 Dezelfde schakeling kan ook gebruikt worden om extern aangeboden pulsen te tellen.
 Denk hierbij aan het tellen van het aantal fietsen dat over een fietspad rijdt.
@@ -19,13 +21,19 @@ We noemen zo'n teller een \textsl{counter}. Technisch gezien is er geen verschil
 tussen de hardware van een timer en een counter. Het verschil is dus alleen wat
 de klokbron is.
 
-De ATmega32 heeft drie timer/counter: Timer/Counter 0 (T/C0) is een 8-bits
-timer/counter, Timer/Counter 1 (T/C1) is een 16-bits timer/counter en
-Timer/Counter 2 is een 8-bits timer/counter. T/C0 en T/C1 hebben gemeen dat
+De ATmega32 heeft drie timer/counters: een 8-bits Timer/Counter 0 (T/C0), een
+16-bits Timer/Counter 1 (T/C1) en een 8 bits Timer/Counter 2 (T/C2).
+T/C0 en T/C1 hebben gemeen dat
 ze kunnen worden geklokt op een intern kloksignaal en op externe pulsen.
 T/C2 kan worden geklokt op een intern kloksignaal en een externe oscillator.
-Verder kunnen alle timer/counter zogenoemde pulsbreedte gemoduleerde signalen
-genereren (PWM-signalen). 
+Alle timer/counters hebben diverse interrupt-mogelijkheden en zogenoemde
+pulsbreedte gemoduleerde signalen genereren (PWM-signalen). Het is goed om
+te weten dat de alle timers min of meer dezelfde mogelijkheden hebben.
+
+In dit hoofdstuk behandelen we de drie timer/counters. Van elke timer/counter
+worden de instelmogelijkheden behandeld, zoals de werkmodi, interruptgeneratie
+en signaalvormgeneratie. We laten de mogelijkheden zien aan de hand van een aantal
+programmavoorbeelden, zowel in assembler als C.
 
 %% Met de combinatie van een counter en een
 %%timer kan een \textsl{frequentiemeter} gemaakt worden. E\'en timer meet de tijd van 1
@@ -81,21 +89,15 @@ elkaar in het register staan. Let daar op bij het programmeren van dit
 register.
 
 %%%% TCCR0
-\begin{figure}[!ht]
-\renewcommand\arraystretch{1.4}
-%\footnotesize
-\scriptsize
-\centering
-\begin{tabu} to 0.9\textwidth {X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]}
+\begin{registerdef}{De WGM01- en WGM00-bits in het TCCR0 register}{fig:timtccr0wgmbits}
 7 & 6 & 5 & 4 & 3 & 2 & 1 & 0 \\
 \hline
-\multicolumn{1}{|c}{\cellcolor{lightgrey} FOC0} & \multicolumn{1}{|c}{WGM00} & \multicolumn{1}{|c}{\cellcolor{lightgrey}COM01} & \multicolumn{1}{|c}{\cellcolor{lightgrey}COM00} & \multicolumn{1}{|c}{WGM01} & \multicolumn{1}{|c}{\cellcolor{lightgrey}CS02} & \multicolumn{1}{|c}{\cellcolor{lightgrey}CS01} & \multicolumn{1}{|c|}{\cellcolor{lightgrey}CS00} \\ \hline
+\multicolumn{1}{|c}{\cellcolor{regcell} FOC0} & \multicolumn{1}{|c}{WGM00} & \multicolumn{1}{|c}{\cellcolor{regcell}COM01} & \multicolumn{1}{|c}{\cellcolor{regcell}COM00} & \multicolumn{1}{|c}{WGM01} & \multicolumn{1}{|c}{\cellcolor{regcell}CS02} & \multicolumn{1}{|c}{\cellcolor{regcell}CS01} & \multicolumn{1}{|c|}{\cellcolor{regcell}CS00} \\ \hline
 W & R/W & R/W & R/W & R/W & R/W & R/W & R/W \\
 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
-\end{tabu}
-\caption{De WGM01- en WGM00-bits in het TCCR0 register.}
-\label{fig:timtccr0wgmbits}
-\end{figure}
+%\caption{De WGM01- en WGM00-bits in het TCCR0 register.}
+%\label{fig:timtccr0wgmbits}
+\end{registerdef}
 %%%% TCCR0
 
 In tabel~\ref{tab:timtccr0wgmbits} is te zien hoe de bits ingesteld moeten
@@ -233,21 +235,13 @@ tabel~\ref{tab:timklokselectie0}.
 \end{figure}
 
 %%%% TCCR0
-\begin{figure}[!ht]
-\renewcommand\arraystretch{1.4}
-%\footnotesize
-\scriptsize
-\centering
-\begin{tabu} to 0.9\textwidth {X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]}
+\begin{registerdef}{De CS02-, CS01 en CS00-bits in het TCCR0-register}{fig:timtccr0csbits}
 7 & 6 & 5 & 4 & 3 & 2 & 1 & 0 \\
 \hline
-\multicolumn{1}{|c}{\cellcolor{lightgrey} FOC0} & \multicolumn{1}{|c}{\cellcolor{lightgrey}WGM00} & \multicolumn{1}{|c}{\cellcolor{lightgrey} COM01} & \multicolumn{1}{|c}{\cellcolor{lightgrey} COM00} & \multicolumn{1}{|c}{\cellcolor{lightgrey} WGM01} & \multicolumn{1}{|c}{CS02} & \multicolumn{1}{|c}{CS01} & \multicolumn{1}{|c|}{CS00} \\ \hline
+\multicolumn{1}{|c}{\cellcolor{regcell} FOC0} & \multicolumn{1}{|c}{\cellcolor{regcell}WGM00} & \multicolumn{1}{|c}{\cellcolor{regcell} COM01} & \multicolumn{1}{|c}{\cellcolor{regcell} COM00} & \multicolumn{1}{|c}{\cellcolor{regcell} WGM01} & \multicolumn{1}{|c}{CS02} & \multicolumn{1}{|c}{CS01} & \multicolumn{1}{|c|}{CS00} \\ \hline
 W & R/W & R/W & R/W & R/W & R/W & R/W & R/W \\
 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
-\end{tabu}
-\caption{De CS02-, CS01 en CS00-bits in het TCCR0-register.}
-\label{fig:timtccr0csbits}
-\end{figure}
+\end{registerdef}
 %%%% TCCR0
 
 \begin{table}[!ht]
@@ -295,7 +289,7 @@ terug te vinden in het Timer/Counter Interrupt Flag Register (TIFR).
 
 \begin{figure}[!ht]
 \centering
-\begin{tikzpicture}[font=\footnotesize\sffamily,>=stealth',scale=1.25]
+\begin{tikzpicture}[font=\footnotesize\sffamily,>=latex,scale=1.25]
 \coordinate (A) at (0,0);
 \draw [ultra thick] (A) node[left] {0x00} -- ++(0,2) node[left] {0xFF};
 \draw (A) -- ++(1.5,2) -- ++(0,-2) -- ++(1.5,2) -- ++(0,-2) -- ++(1.5,2) -- ++(0,-2) -- ++(1.5,2) -- ++(0,-2) -- ++(0.75,1);
@@ -324,26 +318,18 @@ overflow-frequentie dus 14,0625 Hz. Merk op dat bij deze klokfrequentie
 de overflow-frequentie niet lager te realiseren is.
 
 %%%% TIFR
-\begin{figure}[!ht]
-\renewcommand\arraystretch{1.4}
-%\footnotesize
-\scriptsize
-\centering
-\begin{tabu} to 0.9\textwidth {X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]}
+\begin{registerdef}{Het TIFR-register}{fig:tc0tifr}
 7 & 6 & 5 & 4 & 3 & 2 & 1 & 0 \\
 \hline
-\multicolumn{1}{|c}{\cellcolor{lightgrey} OCF2} & \multicolumn{1}{|c}{\cellcolor{lightgrey} TOV2} & \multicolumn{1}{|c}{\cellcolor{lightgrey} ICF1} & \multicolumn{1}{|c}{\cellcolor{lightgrey} OCF1A} & \multicolumn{1}{|c}{\cellcolor{lightgrey} OCF1B} & \multicolumn{1}{|c}{\cellcolor{lightgrey} TOV1} & \multicolumn{1}{|c}{OCF0} & \multicolumn{1}{|c|}{TOV0} \\ \hline
+\multicolumn{1}{|c}{\cellcolor{regcell} OCF2} & \multicolumn{1}{|c}{\cellcolor{regcell} TOV2} & \multicolumn{1}{|c}{\cellcolor{regcell} ICF1} & \multicolumn{1}{|c}{\cellcolor{regcell} OCF1A} & \multicolumn{1}{|c}{\cellcolor{regcell} OCF1B} & \multicolumn{1}{|c}{\cellcolor{regcell} TOV1} & \multicolumn{1}{|c}{OCF0} & \multicolumn{1}{|c|}{TOV0} \\ \hline
 R/W & R/W & R/W & R/W & R/W & R/W & R/W & R/W \\
 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
-\end{tabu}
-\caption{Het TIFR-register.}
-\label{fig:tc0tifr}
-\end{figure}
+\end{registerdef}
 %%%% TIFR
 
 \begin{figure}[!ht]
 \centering
-\begin{tikzpicture}[font=\footnotesize\sffamily,>=stealth',scale=1.25]
+\begin{tikzpicture}[font=\footnotesize\sffamily,>=latex,scale=1.25]
 \coordinate (A) at (0,0);
 \draw [ultra thick] (A) node[left] {0x00} -- ++(0,2) node[left] {0xFF};
 \draw (A) -- ++(1.125,1.5) -- ++(0,-1.5) -- ++(1.125,1.5) -- ++(0,-1.5) -- ++(1.125,1.5) -- ++(0,-1.5) -- ++(1.125,1.5) -- ++(0,-1.5) -- ++(1.125,1.5) -- ++(0,-1.5) -- ++(1.125,1.5) -- ++(0,-1.5) -- ++(0.5625,0.75);
@@ -395,21 +381,13 @@ De besturing van Timer/Counter 0 is vastgelegd in het TCCR0-register, zie
 figuur~\ref{fig:tccr0}. Dit register kan zowel gelezen als geschreven worden.
 
 %%%% TCCR0
-\begin{figure}[!ht]
-\renewcommand\arraystretch{1.4}
-%\footnotesize
-\scriptsize
-\centering
-\begin{tabu} to 0.9\textwidth {X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]}
+\begin{registerdef}{TCCR0 register}{fig:tccr0}
 7 & 6 & 5 & 4 & 3 & 2 & 1 & 0 \\
 \hline
 \multicolumn{1}{|c}{FOC0} & \multicolumn{1}{|c}{WGM00} & \multicolumn{1}{|c}{COM01} & \multicolumn{1}{|c}{COM00} & \multicolumn{1}{|c}{WGM01} & \multicolumn{1}{|c}{CS02} & \multicolumn{1}{|c}{CS01} & \multicolumn{1}{|c|}{CS00} \\ \hline
 W & R/W & R/W & R/W & R/W & R/W & R/W & R/W \\
 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
-\end{tabu}
-\caption{TCCR0 register}
-\label{fig:tccr0}
-\end{figure}
+\end{registerdef}
 %%%% TCCR0
 
 \textbf{Bit 7 -- FOC0: Force Output Compare}\\
@@ -531,21 +509,13 @@ zie figuur~\ref{fig:tcnt0}. Dit register kan zowel gelezen als geschreven worden
 een schrijfactie telt Timer/Counter~0 verder vanaf de geschreven waarde.
 
 %%%% TCNT0
-\begin{figure}[!ht]
-\renewcommand\arraystretch{1.4}
-%\footnotesize
-\scriptsize
-\centering
-\begin{tabu} to 0.9\textwidth {X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]}
+\begin{registerdef}{Het TCNT0 register}{fig:tcnt0}
 7 & 6 & 5 & 4 & 3 & 2 & 1 & 0 \\
 \hline
 \multicolumn{8}{|c|}{TCNT0[7:0]}  \\ \hline
 R/W & R/W & R/W & R/W & R/W & R/W & R/W & R/W \\
 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
-\end{tabu}
-\caption{TCNT0 register}
-\label{fig:tcnt0}
-\end{figure}
+\end{registerdef}
 %%%% TCNT0
 
 Het OCR0-register bevat een 8-bits waarde en wordt continue vergeleken met de waarde
@@ -554,21 +524,13 @@ elkaar kan een interrupt gegenereerd worden of kan een golfvorm gegenereerd word
 de OC0-uitgang.
 
 %%%% OCR0
-\begin{figure}[!ht]
-\renewcommand\arraystretch{1.4}
-%\footnotesize
-\scriptsize
-\centering
-\begin{tabu} to 0.9\textwidth {X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]}
+\begin{registerdef}{Het OCR0 register}{fig:ocr0}
 7 & 6 & 5 & 4 & 3 & 2 & 1 & 0 \\
 \hline
 \multicolumn{8}{|c|}{OCR0[7:0]}  \\ \hline
 R/W & R/W & R/W & R/W & R/W & R/W & R/W & R/W \\
 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
-\end{tabu}
-\caption{OCR0 register}
-\label{fig:ocr0}
-\end{figure}
+\end{registerdef}
 %%%% OCR0
 
 
@@ -582,21 +544,13 @@ De indeling van het TIMSK-register is te zien in figuur~\ref{fig:timsk}. Voor Ti
 zijn alleen de bits OCIE0 (bit 1) en TOIE0 (bit 0) van belang.
 
 %%%% TIMSK
-\begin{figure}[!ht]
-\renewcommand\arraystretch{1.4}
-%\footnotesize
-\scriptsize
-\centering
-\begin{tabu} to 0.9\textwidth {X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]}
+\begin{registerdef}{Het TIMSK register}{fig:timsk}
 7 & 6 & 5 & 4 & 3 & 2 & 1 & 0 \\
 \hline
-\multicolumn{1}{|c}{\cellcolor{lightgrey} OCIE2} & \multicolumn{1}{|c}{\cellcolor{lightgrey} TOIE2} & \multicolumn{1}{|c}{\cellcolor{lightgrey} TICIE1} & \multicolumn{1}{|c}{\cellcolor{lightgrey} OCIE1A} & \multicolumn{1}{|c}{\cellcolor{lightgrey} OCIE1B} & \multicolumn{1}{|c}{\cellcolor{lightgrey} TOIE1} & \multicolumn{1}{|c}{OCIE0} & \multicolumn{1}{|c|}{TOIE0} \\ \hline
+\multicolumn{1}{|c}{\cellcolor{regcell} OCIE2} & \multicolumn{1}{|c}{\cellcolor{regcell} TOIE2} & \multicolumn{1}{|c}{\cellcolor{regcell} TICIE1} & \multicolumn{1}{|c}{\cellcolor{regcell} OCIE1A} & \multicolumn{1}{|c}{\cellcolor{regcell} OCIE1B} & \multicolumn{1}{|c}{\cellcolor{regcell} TOIE1} & \multicolumn{1}{|c}{OCIE0} & \multicolumn{1}{|c|}{TOIE0} \\ \hline
 R/W & R/W & R/W & R/W & R/W & R/W & R/W & R/W \\
 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
-\end{tabu}
-\caption{TIMSK register}
-\label{fig:timsk}
-\end{figure}
+\end{registerdef}
 %%%% TIMSK
 
 \textbf{Bit 1 -- OCIE0: Timer/Counter 0 Output Compare Match Interrupt Enable} \\
@@ -613,21 +567,13 @@ De indeling van het TIFR-register is te zien in figuur~\ref{fig:tifr}. Voor Time
 zijn alleen de bits OCF0 (bit 1) en TOV0 (bit 0) van belang.
 
 %%%% TIFR
-\begin{figure}[!ht]
-\renewcommand\arraystretch{1.4}
-%\footnotesize
-\scriptsize
-\centering
-\begin{tabu} to 0.9\textwidth {X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]}
+\begin{registerdef}{Het TIFR register}{fig:tifr}
 7 & 6 & 5 & 4 & 3 & 2 & 1 & 0 \\
 \hline
-\multicolumn{1}{|c}{\cellcolor{lightgrey} OCF2} & \multicolumn{1}{|c}{\cellcolor{lightgrey} TOV2} & \multicolumn{1}{|c}{\cellcolor{lightgrey} ICF1} & \multicolumn{1}{|c}{\cellcolor{lightgrey} OCF1A} & \multicolumn{1}{|c}{\cellcolor{lightgrey} OCF1B} & \multicolumn{1}{|c}{\cellcolor{lightgrey} TOV1} & \multicolumn{1}{|c}{OCF0} & \multicolumn{1}{|c|}{TOV0} \\ \hline
+\multicolumn{1}{|c}{\cellcolor{regcell} OCF2} & \multicolumn{1}{|c}{\cellcolor{regcell} TOV2} & \multicolumn{1}{|c}{\cellcolor{regcell} ICF1} & \multicolumn{1}{|c}{\cellcolor{regcell} OCF1A} & \multicolumn{1}{|c}{\cellcolor{regcell} OCF1B} & \multicolumn{1}{|c}{\cellcolor{regcell} TOV1} & \multicolumn{1}{|c}{OCF0} & \multicolumn{1}{|c|}{TOV0} \\ \hline
 R/W & R/W & R/W & R/W & R/W & R/W & R/W & R/W \\
 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
-\end{tabu}
-\caption{TIFR register}
-\label{fig:tifr}
-\end{figure}
+\end{registerdef}
 %%%% TIFR
 
 \textbf{Bit 1 -- OCF0: Output Compare Flag 0} \\
@@ -644,31 +590,23 @@ bit wordt op 0 gezet als de bijbehorende interrupt wordt uitgevoerd. Als alterna
 het op 0 zetten kan een 1 worden geschreven naar deze bit. In fasecorrect PWM-modus wordt
 deze bit op 1 gezet als Timer/Counter 0 van telrichting verandert op 0.
 
-In figuur~\ref{fig:sfior} is het SFIOR-register te zien.
+In figuur~\ref{fig:intsfior} is het SFIOR-register te zien.
 
 %%%% SFIOR
-\begin{figure}[!ht]
-\renewcommand\arraystretch{1.4}
-%\footnotesize
-\scriptsize
-\centering
-\begin{tabu} to 0.9\textwidth {X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]X[,c,]}
+\begin{registerdef}{Het SFIOR register}{fig:intsfior}
 7 & 6 & 5 & 4 & 3 & 2 & 1 & 0 \\
 \hline
-\multicolumn{1}{|c}{\cellcolor{lightgrey} ADTS2} & \multicolumn{1}{|c}{\cellcolor{lightgrey} ADTS1} & \multicolumn{1}{|c}{\cellcolor{lightgrey} ADTS0} & \multicolumn{1}{|c}{\cellcolor{lightgrey} --} & \multicolumn{1}{|c}{\cellcolor{lightgrey} ACME} & \multicolumn{1}{|c}{\cellcolor{lightgrey} PUD} & \multicolumn{1}{|c}{\cellcolor{lightgrey}PSR2} & \multicolumn{1}{|c|}{PRS10} \\ \hline
+\multicolumn{1}{|c}{\cellcolor{regcell} ADTS2} & \multicolumn{1}{|c}{\cellcolor{regcell} ADTS1} & \multicolumn{1}{|c}{\cellcolor{regcell} ADTS0} & \multicolumn{1}{|c}{\cellcolor{regcell} --} & \multicolumn{1}{|c}{\cellcolor{regcell} ACME} & \multicolumn{1}{|c}{\cellcolor{regcell} PUD} & \multicolumn{1}{|c}{\cellcolor{regcell}PSR2} & \multicolumn{1}{|c|}{PRS10} \\ \hline
 R/W & R/W & R/W & R & R/W & R/W & R/W & R/W \\
 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
-\end{tabu}
-\caption{SFIOR register}
-\label{fig:sfior}
-\end{figure}
+\end{registerdef}
 %%%% SFIOR
 
 \textbf{Bit 0 -- PRS10: Prescaler reset Timer/Counter 1 en Timer/Counter 0}\\
 Wanneer deze bit met een 1 geschreven wordt, zal de prescaler van Timer/Counter 1 en
 Timer/Counter 0 worden gereset. Nadat de operatie is voltooid, wordt deze bit door de
 hardware op 0 gezet. Merk op dat de prescaler door zowel Timer/Counter 1 als
-Timer/Counter 0 gebruikt wordt. Het be\"invloedt de werking van beide Timer/Counters.
+Timer/Counter 0 gebruikt wordt. Het beïnvloedt de werking van beide Timer/Counters.
 Deze bit leest altijd als een 0.
 
 \endinput
