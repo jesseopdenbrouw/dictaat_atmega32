@@ -70,7 +70,7 @@ van de ISR wordt teruggekeerd naar het lopende programma \textsf{H}.
 \begin{figure}[!ht]
 \centering
 \begin{tikzpicture}[line width=1pt,font=\sffamily\footnotesize,-latex,scale=0.80]
-\draw (0,0)  node (H) [above] {H}  -- (0,-2) node (irq) [left] {irq \rotatebox[origin=c]{150}{\Large\Lightning}};
+\draw (0,0)  node (H) [above] {H}  -- (0,-2) node (irq) [left] {irq \Lightning};
 \draw (0,-2) -- (3,0) node[above] {ISR};
 \draw (3,0)  -- (3,-4) node[below] {return};
 \draw (3,-4) -- (0,-2);
@@ -115,15 +115,16 @@ stack pointer nog niet is ge\"initialiseerd.
 \begin{figure}[!ht]
 \centering
 \begin{tikzpicture}[line width=1pt,font=\sffamily\footnotesize,-latex,scale=0.80]
-\draw (0,0)  node (H) [above] {H}  -- (0,-2) node (irq) [left] {irq \rotatebox[origin=c]{150}{\Lightning}};
+\draw (0,0)  node (H) [above] {H}  -- (0,-2) node (irq) [left] {irq \Lightning};
 \draw (0,-2) -- (3,0) node[above] {ISR} node [right, xshift=.5cm] {I $\leftarrow$ 0, PC op stack};
 \draw (3,0)  -- (3,-4) node[below] {reti} node [right, xshift=.5cm] {I $\leftarrow$ 1, PC van stack};
 \draw (3,-4) -- (0,-2);
 \draw (0,-2) -- (0,-4);
-\draw[-] (11,-1) -- ++(0,-1)
-         rectangle node[xshift=-1.4cm] {sp $\longrightarrow$} ++(1.5,-0.5)
-         rectangle ++(-1.5,-0.5) node[pos=.5] {h}
-++(1.5,1) -- ++(0,1);
+%\draw[-] (11,-1) -- ++(0,-1)
+%         rectangle node[xshift=-1.4cm] {sp $\longrightarrow$} ++(1.5,-0.5)
+%         rectangle ++(-1.5,-0.5) node[pos=.5] {h}
+%++(1.5,1) -- ++(0,1);
+\drawstack{11,-3}{h}
 \end{tikzpicture}
 \caption{Interruptafhandeling: de program counter wordt op de stack gezet.}
 \label{fig:intinterruptdispatchwithstackandiflag}
@@ -212,7 +213,7 @@ figuur~\ref{fig:intinterruptdispatchwithvectortable}.
 \begin{figure}[!ht]
 \centering
 \begin{tikzpicture}[line width=1pt,font=\sffamily\footnotesize,-latex,scale=0.80]
-\draw (0,0)  node (H) [above] {H}  -- (0,-2) node (irq) [left] {irq \rotatebox[origin=c]{150}{\Lightning}};
+\draw (0,0)  node (H) [above] {H}  -- (0,-2) node (irq) [left] {irq \Lightning};
 \draw (3,0) rectangle ++(1.5,-0.4) node[above,pos=0.5,yshift=2mm,align=center] {Interrupt\\Vector\\Table}
             rectangle ++(-1.5,-0.4)
             rectangle ++(1.5,-0.4) node[pos=0.5] (A) {}
