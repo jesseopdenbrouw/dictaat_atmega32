@@ -3,8 +3,81 @@
 
 \usepackage{tikz}
 \usetikzlibrary{arrows}
-\usepackage{marvosym}
-%\usepackage{graphicx}
+
+%% \printhex[number of digits]{decimal value}
+%% number of digits between 1 and 8
+%% decimal value: TeX counter value
+%% \hexdiv = divider, power of 16
+%% \hexvar = number to be converted
+%% \hextmp = scratch calculation counter
+\newcount\hexdiv
+\newcount\hexvar
+\newcount\hextmp
+\newcommand{\printhex}[2][4]{%
+%\hexdiv=0\hexvar=0\hextmp=0
+\hextmp=#1%
+\ifnum#1>7
+\hextmp=#2
+\ifnum\hextmp<0\relax
+\advance\hextmp by 2147483647\advance\hexvar by 1
+\divide\hextmp by 268435456
+\advance\hextmp by 8
+\printhexdigit\hextmp\relax
+\else
+\divide\hextmp by 268435456
+\printhexdigit\hextmp\relax
+\fi
+\fi
+\hexvar=#2%
+\hexdiv=0\ifcase#1\relax \or 16\or 256\or 4096\or 65536\or 1048576\or 16777216\or 268435456\else 268435456\fi
+\ifnum\hexvar<0\relax\advance\hexvar by 2147483647\advance\hexvar by 1\fi
+\hextmp=\hexvar
+\divide\hextmp by \hexdiv%
+\multiply\hextmp by \hexdiv
+\advance\hexvar by -\hextmp
+\divide\hexdiv by 16%
+\loop
+	\hextmp=\hexvar
+	\divide\hextmp by \hexdiv
+	\printhexdigit\hextmp\relax
+	\multiply\hextmp by \hexdiv
+	\advance\hexvar by -\hextmp
+	\divide\hexdiv by 16
+	\ifnum\hexdiv>0
+\repeat
+}
+\newcommand{\printhexdigit}[1]{%
+	\ifcase#1\relax 0\or 1\or 2\or 3\or 4\or 5\or 6\or 7\or 8\or 9\or A\or B\or C\or D\or E\or F\else ***error***\fi
+}
+
+% Define our lightning symbol in Tikz
+\def\Lightning{\tikz\draw (0,0) -- ++(0.40,0.10) -- ++(-0.25,0) -- ++(0.40,0.10);}
+
+%% This command draws a populated stack from bottom to top and leaves one
+%% memory location unpopulated and points the stack pointer to it
+%% Call by: \drawstack[address_bottom_of_stack]{tikz node position}{stack contents}
+%% Example: \drawstack[0x85f]{0,0}{pcl,pch,0xff,0x55,R16,R16}
+\newcounter{stackaddress}
+\newcommand{\drawstack}[3][-1]{%
+\setcounter{stackaddress}{#1}%
+\node at (#2) (startpoint) {};
+\draw (startpoint) ++(1.5,0)
+   \foreach \label in {#3} {
+      ++(-1.5,0) rectangle node {\label} ++(1.5,0.5) node[pos=0.5,right,xshift=0.8cm] {\ifnum\thestackaddress>-1\relax 0x\printhex[3]{\thestackaddress}\fi}
+	  \pgfextra{\addtocounter{stackaddress}{-1}}
+   }
+   ++(-1.5,0) rectangle node {} ++(1.5,0.5) node[pos=0.5,right,xshift=0.8cm] {\ifnum\thestackaddress>-1\relax 0x\printhex[3]{\thestackaddress}\fi}
+   ++(0,0) -- ++(0,1)
+   ++(-1.5,0) -- ++(0,-1)
+   ++(0,-0.25) node[left,xshift=2pt] {sp \tikz[thick,baseline=-0.5ex,-latex] \draw (0,0) -- ++(0.6,0);}
+;
+}
+
+% Style for picturing interrupt routines and subroutines
+\tikzset{bookirqsub/.style={line width=1pt,font=\sffamily,-latex}}
+
+% Define our lightning symbol in Tikz
+\def\Lightning{\tikz\draw (0,0) -- ++(0.40,0.10) -- ++(-0.25,0) -- ++(0.40,0.10);}
 
 \usepackage{longtable}
 
