@@ -5,15 +5,17 @@ meting kan worden gedaan.
 % Soms moet er een bepaalde tijd worden afgemeten,
 %bijvoorbeeld om een waterklep één seconde open te houden.
  Het meten van deze
-tijd (wachten) is op te lossen door middel van de bekende wachtlus (zie paragraaf~%
-\textbf{??}). De processor kan dan echter geen andere taken
+tijd (wachten) is op te lossen door middel van de bekende wachtlus (zie
+paragraaf~\textbf{??}). De processor kan dan echter geen andere taken
 uitvoeren en dat is in veel situaties wél gewenst. Denk hierbij aan Real Time
 systemen en besturingssystemen. Beter is deze tijd hardwarematig te meten.
-Een \textsl{timer} kan dan uitkomst bieden. Een timer is niets anders dan een teller
-die op iedere klokpuls, bijvoorbeeld van de systeemklok, wordt verhoogd. Na een bepaald
-aantal klokpulsen heeft de timer de hoogste stand bereikt en begint weer opnieuw.
-Er wordt dan een signaal aan de processor afgegeven. Dit signaal genereert, indien geactiveerd, een interrupt, waardoor de processor zijn hoofdprogramma verlaat en een
-Interrupt Service Routine gaat uitvoeren.
+Een \textsl{timer} kan dan uitkomst bieden. Een timer is niets anders dan een
+teller die op iedere klokpuls, bijvoorbeeld van de systeemklok, wordt verhoogd.
+Na een bepaald aantal klokpulsen heeft de timer de hoogste stand bereikt en
+begint weer opnieuw. Er wordt dan een signaal aan de processor afgegeven. Dit
+signaal genereert, indien geactiveerd, een interrupt, waardoor de processor
+zijn tijdelijk hoofdprogramma verlaat en een Interrupt Service Routine gaat
+uitvoeren.
 
 Dezelfde schakeling kan ook gebruikt worden om extern aangeboden pulsen te tellen.
 Denk hierbij aan het tellen van het aantal fietsen dat over een fietspad rijdt.
@@ -43,9 +45,11 @@ programmavoorbeelden, zowel in assembler als C.
 
 Timer/Counter 0 is de eerste van de drie timer/counters van de ATmega32 die
 besproken worden. Het is een 8-bits timer/counter wat inhoudt dat het kan tellen
-tussen 0 en~255. Als de timer/counter intern opgewekte klokpulsen telt spreken
+tussen 0 en~255. Als de timer/counter intern opgewekte klokpulsen telt, spreken
 we van een timer. Bij het tellen van extern opgewekte klokpulsen spreken
 we van een counter.
+
+\subsection{Werkmodi}
 
 Timer/Counter 0 heeft vier werkmodi:
 
@@ -60,13 +64,13 @@ kunnen geteld worden. Deze modus wordt besproken in
 paragraaf~\ref{sec:tc0ctcmode}.
 
 \item Fast PWM mode: Timer/Counter telt van 0 tot 255 en begint dan weer op~0.
-Deze modus wordt voornamelijk gebruikt om een signaalvorm op \'e\'en van de externe
+Deze modus wordt voornamelijk gebruikt om een signaalvorm op één van de externe
 pinnen van de ATmega32 te genereren. Deze modus wordt besproken in
 paragraaf~\ref{sec:tc0fastpwmmode}.
 
 \item Phase correct PWM mode: Timer/Counter telt omhoog van 0 tot en met 255
 en telt dan weer omlaag tot en met 0. Deze modus wordt voornamelijk gebruikt om een
-signaalvorm op \'e\'en van de externe pinnen van de ATmega32 te genereren.
+signaalvorm op één van de externe pinnen van de ATmega32 te genereren.
 Deze modus wordt besproken in paragraaf~\ref{sec:tc0phasecorrectpwmmode}.
 \end{itemize}
 
@@ -108,15 +112,112 @@ worden voor de diverse werkmodi.
 \caption{De vier werkmodi van T/C0.}
 \label{tab:timtccr0wgmbits}
 \renewcommand\arraystretch{1.2}
-\setlength{\tabcolsep}{8pt}
-\begin{tabu} {cc|l}
-WGM01 & WGM00 & Modus   \\ \hline
-  0   &   0   & Normal mode  \\
-  0   &   1   & Phase Correct PWM mode \\
-  1   &   0   & CTC mode \\
-  1   &   1   & Fast PWM mode
+\setlength{\tabcolsep}{6pt}
+\begin{tabu} to 0.7\textwidth {ccp{2ex}l}
+\toprule
+WGM01 & WGM00 && Modus   \\
+\midrule
+  0   &   0   && Normal mode  \\
+  0   &   1   && Phase Correct PWM mode \\
+  1   &   0   && CTC mode \\
+  1   &   1   && Fast PWM mode \\
+\bottomrule
 \end{tabu}
 \end{table}
+
+\subsection{Klokbronnen}
+Al eerder is aangegeven dat T/C0 kan tellen op een intern kloksignaal of
+op een extern kloksignaal. Aangezien de interne klokfrequentie vrij groot is
+en het aantal timer-bits klein, zal T/C0 zeer snel op het maximum zitten en
+genereert zodanig heel vaak een \textsl{roll-over}. Vaak willen we de
+roll over op een veel lagere frequentie laten plaatsvinden.
+Een \textsl{prescaler} biedt dan uitkomst. Een prescaler is een digitale
+schakeling die het aangeboden kloksignaal `deelt' door een getal, meestal een
+macht van 2. Hierdoor telt T/C0 op een (veel) lagere frequentie. De prescaler
+van T/C0 heeft vier mogelijke delers: 8, 64, 256 en 1024. Staat de prescaler
+bijvoorbeeld op 1024 ingesteld dan wordt TCNT0 om de 1024 klokpulsen met
+\'e\'en verhoogd. Dat betekent dat er eens in de~1024$\times$256 = 262144
+klokpulsen een roll-over plaatsvindt.
+
+Naast interne klokpulsen kan T/C0 ook externe klokpulsen tellen. Eigenlijk
+telt TC/0 op \textsl{flanken}. Zo kan T/C0 op opgaande of neergaande flanken
+tellen. Het externe kloksignaal moet worden aangeboden aan ingang T0
+(pin 1 op een 40-pin PDIP). De prescaler kan niet ingeschakeld worden bij
+gebruik van externe klokpulsen.
+
+Natuurlijk kan T/C0 ook ``uit'' staan. T/C0 is dan gestopt met tellen. Dit is
+de situatie direct na een reset.
+Bij elkaar levert dit acht mogelijke klokbronnen op. Ook ``uit'' noemen we een
+klokbron en de teller kan ook direct met de systeemklok gevoed worden. Dit
+is met drie bits aan te geven. Dit zijn de CS0-bits in register TCCR0. De
+indeling van de CS0-bits zijn te vinden in figuur~\ref{fig:timtccr0csbits}.
+De betekening van de bitcombinaties zijn te vinden in tabel~\ref{tab:timklokselectie0}.
+
+%%%% TCCR0
+\begin{registerdef}{De CS02-, CS01 en CS00-bits in het TCCR0-register}{fig:timtccr0csbits}
+7 & 6 & 5 & 4 & 3 & 2 & 1 & 0 \\
+\hline
+\multicolumn{1}{|c}{\cellcolor{regcell} FOC0} & \multicolumn{1}{|c}{\cellcolor{regcell}WGM00} & \multicolumn{1}{|c}{\cellcolor{regcell} COM01} & \multicolumn{1}{|c}{\cellcolor{regcell} COM00} & \multicolumn{1}{|c}{\cellcolor{regcell} WGM01} & \multicolumn{1}{|c}{CS02} & \multicolumn{1}{|c}{CS01} & \multicolumn{1}{|c|}{CS00} \\ \hline
+W & R/W & R/W & R/W & R/W & R/W & R/W & R/W \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+\end{registerdef}
+%%%% TCCR0
+
+\begin{table}[!ht]
+\centering
+\caption{Klokbronselectie voor Timer/Counter 0.}
+\label{tab:timklokselectie0}
+\renewcommand\arraystretch{1.2}
+\begin{tabu} {cccp{2ex}l}
+\toprule
+CS02 & CS01 & CS00 && operatie \\
+\midrule
+  0  &   0  &   0  && geen werking, klok is gestopt\\
+  0  &   0  &   1  && $\text{CLK}_\text{IO}/1$, geen prescaler \\
+  0  &   1  &   0  && $\text{CLK}_\text{IO}/8$, van prescaler \\ 
+  0  &   1  &   1  && $\text{CLK}_\text{IO}/64$, van prescaler \\
+  1  &   0  &   0  && $\text{CLK}_\text{IO}/256$, van prescaler \\
+  1  &   0  &   1  && $\text{CLK}_\text{IO}/1024$, van prescaler \\
+  1  &   1  &   0  && externe klokbron op de T0-pin, neergaande flank \\
+  1  &   1  &   1  && externe klokbron op de T0-pin, opgaande flank \\
+\bottomrule
+\end{tabu}
+\end{table}
+
+In figuur~\ref{fig:timsimplenormalctctc0} is een vereenvoudigde weergave
+te zien van T/C0 met de klokbronselectie en normal- en CTC-modi. Signaal
+$\text{CLK}_\text{IO}$ is het kloksignaal dat afkomstig van de
+\textsl{Clock Control Unit}. De frequentie van deze klok is identiek aan
+de systeemfrequentie, maar kan afgeschakeld worden door de processor in
+slaapstand te brengen. De klok wordt aan de prescaler aangeboden die het
+kloksignaal ``deelt'' door een aantal vaste waarden. Als klokbron kan
+ook een extern signaal dienen dat van de T0-pin afkomstig is. Er kan
+zowel op de opgaande als neergaande flank geklokt worden. Al deze
+bronnen worden aangeboden aan een multiplexer die één van de klokbronnen
+selecteert.
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[scale=\figscale]{images/timsimplenormalctctc0}
+\caption{Eenvoudige voorstelling van de normal en CTC-modus van Timer/Counter 0.}
+\label{fig:timsimplenormalctctc0}
+\end{figure}
+
+%In
+%figuur~\ref{fig:timtccr0csbits} is de indeling van de CS0-bits in het
+%TCCR0-register te zien. De betekenis van de CS0-bits is te vinden in
+%tabel~\ref{tab:timklokselectie0}.
+
+
+De code in listing~\ref{cod:setupctcprescaler1024tc0} zorgt ervoor dat T/C0
+ingesteld wordt in CTC-modus met een prescalerwaarde van 1024 als klokbron.
+
+\begin{figure}[!ht]
+\begin{lstlisting}[language=AVRassembler,caption=Selectie van CTC-modus en prescaler 1024.,label=cod:setupctcprescaler1024tc0]
+       ldi  r16,0b00001101   ; select CTC mode, prescaler 1024
+       out  TCCR0,r16
+\end{lstlisting}
+\end{figure}
 
 \subsection{Normal mode}
 \label{sec:tc0normalmode}
@@ -194,84 +295,6 @@ De teller telt immers van 0 t/m 143.
 \end{lstlisting}
 \end{figure}
 
-\subsection{Klokbronnen}
-Al eerder is aangegeven dat T/C0 kan tellen op een intern kloksignaal of
-op een extern kloksignaal. Aangezien de interne klokfrequentie vrij groot is
-en het aantal timer-bits klein, zal T/C0 zeer snel op het maximum zitten en
-genereert zodanig heel vaak een \textsl{timer overflow}. Vaak willen we de
-timer overflow op een veel lagere frequentie laten plaatsvinden.
-Een \textsl{prescaler} biedt dan uitkomst. Een prescaler is een digitale
-schakeling die het aangeboden kloksignaal `deelt' door een getal, meestal een
-macht van 2. Hierdoor telt T/C0 op een (veel) lagere frequentie. De prescaler
-van T/C0 heeft vier mogelijke delers: 8, 64, 256 en 1024. Staat de prescaler
-bijvoorbeeld op 1024 ingesteld dan wordt TCNT0 om de 1024 klokpulsen met
-\'e\'en verhoogd. Dat betekent dat er eens in de~1024$\times$256 = 262144
-klokpulsen 
-een roll-over plaatsvindt.
-
-Naast interne klokpulsen kan T/C0 ook externe klokpulsen tellen. Eigenlijk
-telt TC/0 op \textsl{flanken}. Zo kan T/C0 op opgaande of neergaande flanken
-tellen. Het externe kloksignaal moet worden aangeboden aan ingang T0
-(pin 1 op een 40-pin PDIP). De prescaler kan niet ingeschakeld worden bij
-gebruik van externe klokpulsen.
-
-Natuurlijk kan T/C0 ook ``uit'' staan. T/C0 is dan gestopt met tellen. Dit is
-de situatie direct na een reset.
-Bij elkaar levert dit acht mogelijke klokbronnen op. Ook ``uit'' noemen we een
-klokbron en de teller kan ook direct met de systeemklok gevoed worden. Dit
-is met drie bits aan te geven. Dit zijn de CS0-bits in register TCCR0.
-
-In figuur~\ref{fig:timsimplenormalctctc0} is een vereenvoudigde weergave
-te zien van T/C0 met de klokbronselectie en normal- en CTC-modi. In
-figuur~\ref{fig:timtccr0csbits} is de indeling van de CS0-bits in het
-TCCR0-register te zien. De betekenis van de CS0-bits is te vinden in
-tabel~\ref{tab:timklokselectie0}.
-
-\begin{figure}[!ht]
-\centering
-\includegraphics[scale=\figscale]{images/timsimplenormalctctc0}
-\caption{Eenvoudige voorstelling van de normal en CTC-modus van Timer/Counter 0.}
-\label{fig:timsimplenormalctctc0}
-\end{figure}
-
-%%%% TCCR0
-\begin{registerdef}{De CS02-, CS01 en CS00-bits in het TCCR0-register}{fig:timtccr0csbits}
-7 & 6 & 5 & 4 & 3 & 2 & 1 & 0 \\
-\hline
-\multicolumn{1}{|c}{\cellcolor{regcell} FOC0} & \multicolumn{1}{|c}{\cellcolor{regcell}WGM00} & \multicolumn{1}{|c}{\cellcolor{regcell} COM01} & \multicolumn{1}{|c}{\cellcolor{regcell} COM00} & \multicolumn{1}{|c}{\cellcolor{regcell} WGM01} & \multicolumn{1}{|c}{CS02} & \multicolumn{1}{|c}{CS01} & \multicolumn{1}{|c|}{CS00} \\ \hline
-W & R/W & R/W & R/W & R/W & R/W & R/W & R/W \\
-0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
-\end{registerdef}
-%%%% TCCR0
-
-\begin{table}[!ht]
-\centering
-\caption{Klokbronselectie voor Timer/Counter 0.}
-\label{tab:timklokselectie0}
-\renewcommand\arraystretch{1.2}
-%\tabulinesep=1.2mm
-\begin{tabu} to 0.5\textwidth{ccc|l}
-CS02 & CS01 & CS00 & operatie \\ \hline
-  0  &   0  &   0  & geen werking, klok is gestopt\\
-  0  &   0  &   1  & $\text{CLK}_\text{IO}/1$, geen prescaler \\
-  0  &   1  &   0  & $\text{CLK}_\text{IO}/8$, van prescaler \\ 
-  0  &   1  &   1  & $\text{CLK}_\text{IO}/64$, van prescaler \\
-  1  &   0  &   0  & $\text{CLK}_\text{IO}/256$, van prescaler \\
-  1  &   0  &   1  & $\text{CLK}_\text{IO}/1024$, van prescaler \\
-  1  &   1  &   0  & externe klokbron op de T0-pin, neergaande flank \\
-  1  &   1  &   1  & externe klokbron op de T0-pin, opgaande flank \\
-\end{tabu}
-\end{table}
-
-De code in listing~\ref{cod:setupctcprescaler1024tc0} zorgt ervoor dat T/C0
-ingesteld wordt in CTC-modus met een prescalerwaarde van 1024 als klokbron.
-
-\begin{figure}[!ht]
-\begin{lstlisting}[language=AVRassembler,caption=Selectie van CTC-modus en prescaler 1024.,label=cod:setupctcprescaler1024tc0]
-       ldi  r16,0b00001101   ; select CTC mode, prescaler 1024
-       out  TCCR0,r16
-\end{lstlisting}
-\end{figure}
 
 \subsection{Interrupts: Timer overflow en Output Compare Match overflow}
 Een taak die vaak voorkomt in de ATmega32, is het periodiek uitvoeren
